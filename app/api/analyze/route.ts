@@ -61,8 +61,12 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
   // Models confirmed available — tries in order, uses first that works
   const modelNames = [
     'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
+    'gemini-flash-latest',       // Fallback to stable Gemini 1.5 Flash
+    'gemini-pro-latest',         // Fallback to Gemini 1.5 Pro
+    'gemini-2.5-pro',            // Fallback to Gemini 2.5 Pro
   ]
 
   const errors: string[] = []
