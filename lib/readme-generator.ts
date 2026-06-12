@@ -455,7 +455,7 @@ const SKILL_CATEGORIES = {
   } else {
     lines.push('---')
     lines.push(
-      '<p align="center"><i>Generated with ❤️ using GitHub README Generator</i></p>'
+      `<p align="center"><i>Generated with ❤️ using <a href="${hostUrl}" target="_blank">GitHub README Generator</a></i></p>`
     )
   }
 
