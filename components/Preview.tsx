@@ -34,14 +34,14 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
   return (
     <div className="flex flex-col h-full">
       {/* ── Tabs + actions ────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-[#222232] px-5 py-3 shrink-0 bg-[#0a0a0f]/40 backdrop-blur-sm">
-        <div className="flex gap-1 bg-[#14141e]/80 border border-[#222232] p-1 rounded-xl">
+      <div className="flex items-center justify-between border-b border-[var(--border-input)] px-5 py-3 shrink-0 bg-[var(--bg-main)]/40 backdrop-blur-sm transition-colors duration-300">
+        <div className="flex gap-1 bg-[var(--bg-input)]/80 border border-[var(--border-input)] p-1 rounded-xl transition-colors duration-300">
           <button
             onClick={() => setTab('preview')}
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
               tab === 'preview'
                 ? 'bg-[#7C5CFC] text-white shadow-[0_2px_8px_rgba(124,92,252,0.4)]'
-                : 'text-gray-400 hover:text-gray-200'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             <Eye size={12} /> {t.previewTab}
@@ -51,7 +51,7 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
               tab === 'code'
                 ? 'bg-[#7C5CFC] text-white shadow-[0_2px_8px_rgba(124,92,252,0.4)]'
-                : 'text-gray-400 hover:text-gray-200'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
             }`}
           >
             <Code2 size={12} /> {t.markdownTab}
@@ -61,7 +61,7 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
         <div className="flex gap-2">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-[#222232] text-gray-300 hover:border-[#7C5CFC] hover:text-white active:scale-95 transition-all duration-150 bg-[#14141e]/30"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border-input)] text-[var(--text-light)] hover:border-[#7C5CFC] hover:text-[var(--text-main)] active:scale-95 transition-all duration-150 bg-[var(--bg-input)]/30"
           >
             {copied ? (
               <Check size={12} className="text-green-400" />
@@ -84,13 +84,13 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
         {tab === 'preview' ? (
           <div
             key="preview"
-            className="tab-content md-preview bg-[#0d1117] rounded-xl p-6 text-sm text-gray-200 leading-relaxed border border-[#2a2a3a]/50"
+            className="tab-content md-preview bg-[var(--bg-input)] rounded-xl p-6 text-sm text-[var(--text-light)] leading-relaxed border border-[var(--border-input)]/50 transition-colors duration-300"
             dangerouslySetInnerHTML={{ __html: markdownToHtml(markdown) }}
           />
         ) : (
           <pre
             key="code"
-            className="tab-content bg-[#0d1117] rounded-xl p-4 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap font-mono border border-[#2a2a3a]/50 leading-relaxed"
+            className="tab-content bg-[var(--bg-input)] rounded-xl p-4 text-xs text-[var(--text-light)] overflow-x-auto whitespace-pre-wrap font-mono border border-[var(--border-input)]/50 leading-relaxed transition-colors duration-300"
           >
             {markdown}
           </pre>

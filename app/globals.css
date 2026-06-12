@@ -96,22 +96,22 @@ html.light {
 }
 
 /* ── View Transitions ────────────────────────────────── */
+::view-transition-image-pair(root) {
+  isolation: auto;
+}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+  display: block;
 }
-::view-transition-old(root) {
-  z-index: 1;
-}
-::view-transition-new(root) {
-  z-index: 9999;
-}
-.dark::view-transition-old(root) {
-  z-index: 9999;
-}
-.dark::view-transition-new(root) {
-  z-index: 1;
+
+/* Disable all CSS transitions/animations when theme-switching class is active on root */
+.theme-switching,
+.theme-switching * {
+  transition: none !important;
+  animation-duration: 0s !important;
+  animation-name: none !important;
 }
 
 /* ── Custom Skill Neon Glows ─────────────────────────── */

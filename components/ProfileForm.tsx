@@ -42,12 +42,12 @@ function Field({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+      <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
         {label}
       </span>
       <input
         {...props}
-        className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
+        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
       />
     </label>
   )
@@ -142,10 +142,10 @@ export default function ProfileForm({
     <div className="flex flex-col gap-6">
 
       {/* ── Basic Info ────────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
-        <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
             {t.basicInfo}
           </h2>
         </div>
@@ -164,7 +164,7 @@ export default function ProfileForm({
           />
         </div>
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
             {data.multilingualReadme ? 'Bio (Uzbek)' : t.bio}
           </span>
           <textarea
@@ -172,14 +172,14 @@ export default function ProfileForm({
             value={data.bio}
             onChange={(e) => update('bio', e.target.value)}
             rows={2}
-            className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
+            className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
           />
         </label>
 
         {data.multilingualReadme && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1 border-t border-[#232333]/40 pt-3.5 slide-down">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1 border-t border-[var(--border-input)]/60 pt-3.5 slide-down">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
                 Bio (English)
               </span>
               <textarea
@@ -187,11 +187,11 @@ export default function ProfileForm({
                 value={data.bioEn}
                 onChange={(e) => update('bioEn', e.target.value)}
                 rows={2}
-                className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
                 Bio (Русский)
               </span>
               <textarea
@@ -199,7 +199,7 @@ export default function ProfileForm({
                 value={data.bioRu}
                 onChange={(e) => update('bioRu', e.target.value)}
                 rows={2}
-                className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
               />
             </label>
           </div>
@@ -222,17 +222,17 @@ export default function ProfileForm({
       </section>
 
       {/* ── Social Links ──────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
-        <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
             {t.linksAndAi}
           </h2>
         </div>
 
         {/* GitHub + AI button row */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
             {t.githubUsername}
           </span>
           <div className="flex gap-2">
@@ -240,7 +240,7 @@ export default function ProfileForm({
               placeholder="ogabek"
               value={data.github}
               onChange={(e) => update('github', e.target.value.trim())}
-              className="flex-1 min-w-0 bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
+              className="flex-1 min-w-0 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
             />
             <button
               type="button"
@@ -262,27 +262,27 @@ export default function ProfileForm({
         </div>
 
         {/* AI Options Toggle */}
-        <div className="border-t border-[#232333]/60 pt-3">
+        <div className="border-t border-[var(--border-input)]/60 pt-3">
           <button
             type="button"
             onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
           >
             <span>{t.aiSettings}</span>
             <span className="text-[10px]">{aiSettingsOpen ? '▲' : '▼'}</span>
           </button>
 
           {aiSettingsOpen && (
-            <div className="flex flex-col gap-3 mt-3 slide-down bg-[#14141e]/30 border border-[#222232]/50 p-3.5 rounded-xl">
+            <div className="flex flex-col gap-3 mt-3 slide-down bg-[var(--bg-input)]/30 border border-[var(--border-input)]/50 p-3.5 rounded-xl">
               {/* Tone Selection */}
               <div className="flex flex-col gap-1.5 relative">
-                <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
                   {t.bioTone}
                 </span>
                 <button
                   type="button"
                   onClick={() => setToneDropdownOpen(!toneDropdownOpen)}
-                  className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-1.5 text-xs text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+                  className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
                 >
                   <span>
                     {aiTone === 'professional' && t.toneProfessional}
@@ -290,13 +290,13 @@ export default function ProfileForm({
                     {aiTone === 'creative' && t.toneCreative}
                     {aiTone === 'hacker' && t.toneHacker}
                   </span>
-                  <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${toneDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={12} className={`text-[var(--text-muted)] transition-transform duration-200 ${toneDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {toneDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setToneDropdownOpen(false)} />
-                    <div className="absolute top-[calc(100%+4px)] left-0 w-full z-40 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto backdrop-blur-md">
+                    <div className="absolute top-[calc(100%+4px)] left-0 w-full z-40 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto backdrop-blur-md">
                       {[
                         { value: 'professional', label: t.toneProfessional },
                         { value: 'minimalist', label: t.toneMinimalist },
@@ -312,8 +312,8 @@ export default function ProfileForm({
                           }}
                           className={`w-full text-left px-3.5 py-1.5 text-xs transition-all duration-150 ${
                             aiTone === opt.value
-                              ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
-                              : 'text-gray-300 hover:bg-[#7C5CFC]/5'
+                              ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
+                              : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
                           }`}
                         >
                           {opt.label}
@@ -326,7 +326,7 @@ export default function ProfileForm({
 
               {/* Custom Instructions */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
                   {t.customInstructions}
                 </span>
                 <textarea
@@ -334,7 +334,7 @@ export default function ProfileForm({
                   value={aiInstructions}
                   onChange={(e) => setAiInstructions(e.target.value)}
                   rows={2}
-                  className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
                 />
               </div>
             </div>
@@ -342,14 +342,14 @@ export default function ProfileForm({
         </div>
 
         {/* Multilingual README Toggle */}
-        <label className="flex items-center gap-2 bg-[#14141e]/50 border border-[#222232] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
+        <label className="flex items-center gap-2 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
           <input
             type="checkbox"
             checked={data.multilingualReadme}
             onChange={(e) => update('multilingualReadme', e.target.checked)}
             className="accent-[#7C5CFC] w-4 h-4 shrink-0"
           />
-          <span className="text-gray-300 text-xs font-semibold">{t.multilingualReadmeToggle}</span>
+          <span className="text-[var(--text-light)] text-xs font-semibold">{t.multilingualReadmeToggle}</span>
         </label>
 
         {/* AI error */}
@@ -368,7 +368,7 @@ export default function ProfileForm({
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#7C5CFC] to-[#a855f7] flex items-center justify-center shrink-0">
                 <Sparkles size={10} className="text-white" />
               </div>
-              <span className="text-xs font-bold text-[#a78bfa] uppercase tracking-widest">
+              <span className="text-xs font-bold text-[var(--text-accent)] uppercase tracking-widest">
                 {t.aiSuggestionTitle}
               </span>
             </div>
@@ -376,10 +376,10 @@ export default function ProfileForm({
             {/* Bio */}
             {suggestion.bio && (
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.suggestedBio}
                 </span>
-                <p className="text-sm text-gray-200 leading-relaxed italic border-l-2 border-[#7C5CFC]/40 pl-3">
+                <p className="text-sm text-[var(--text-light)] leading-relaxed italic border-l-2 border-[#7C5CFC]/40 pl-3">
                   {suggestion.bio}
                 </p>
               </div>
@@ -389,47 +389,47 @@ export default function ProfileForm({
             {(suggestion.location || suggestion.twitter || suggestion.website ||
               suggestion.linkedin || suggestion.instagram || suggestion.youtube || suggestion.telegram || suggestion.facebook) && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.profileDetails}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {suggestion.location && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       📍 {suggestion.location}
                     </span>
                   )}
                   {suggestion.twitter && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       🐦 @{suggestion.twitter.replace('@', '')}
                     </span>
                   )}
                   {suggestion.linkedin && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       💼 LinkedIn
                     </span>
                   )}
                   {suggestion.instagram && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       📸 Instagram
                     </span>
                   )}
                   {suggestion.youtube && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       ▶️ YouTube
                     </span>
                   )}
                   {suggestion.telegram && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       ✈️ Telegram
                     </span>
                   )}
                   {suggestion.facebook && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       👥 Facebook
                     </span>
                   )}
                   {suggestion.website && (
-                    <span className="flex items-center gap-1 text-[11px] bg-[#15151f] border border-[#2a2a3a] text-gray-300 px-2.5 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[11px] bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-light)] px-2.5 py-1 rounded-full">
                       🌐 {suggestion.website.replace(/^https?:\/\//, '')}
                     </span>
                   )}
@@ -440,7 +440,7 @@ export default function ProfileForm({
             {/* Detected skills */}
             {suggestion.skills.length > 0 && (
               <div className="flex flex-col gap-1.5">
-                <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.detectedSkills}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -465,17 +465,17 @@ export default function ProfileForm({
 
             {/* Suggested projects */}
             {suggestion.projects && suggestion.projects.length > 0 && (
-              <div className="flex flex-col gap-1.5 border-t border-[#7C5CFC]/20 pt-2.5">
-                <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
+              <div className="flex flex-col gap-1.5 border-t border-[var(--border-input)]/40 pt-2.5">
+                <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.suggestedProjects}
                 </span>
                 <div className="flex flex-col gap-1.5">
                   {suggestion.projects.map((p, idx) => (
-                    <div key={idx} className="bg-[#14141e]/50 border border-[#222232]/70 p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
-                      <span className="font-semibold text-gray-200 flex items-center gap-1">
+                    <div key={idx} className="bg-[var(--bg-input)]/50 border border-[var(--border-input)]/70 p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
+                      <span className="font-semibold text-[var(--text-main)] flex items-center gap-1">
                         🚀 {p.name}
                       </span>
-                      <p className="text-gray-400 leading-normal">{p.description}</p>
+                      <p className="text-[var(--text-muted)] leading-normal">{p.description}</p>
                     </div>
                   ))}
                 </div>
@@ -492,7 +492,7 @@ export default function ProfileForm({
               </button>
               <button
                 onClick={() => setSuggestion(null)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#2a2a3a] text-gray-400 hover:text-gray-200 hover:border-gray-500 active:scale-95 transition-all duration-150"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border-input)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-gray-500 active:scale-95 transition-all duration-150"
               >
                 <XCircle size={12} /> {t.decline}
               </button>
@@ -553,11 +553,11 @@ export default function ProfileForm({
       </section>
 
       {/* ── Featured Projects ──────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
-        <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
               {t.featuredProjects}
             </h2>
           </div>
@@ -582,7 +582,7 @@ export default function ProfileForm({
         </div>
 
         {data.featuredProjects.length === 0 ? (
-          <p className="text-xs text-gray-500 italic">
+          <p className="text-xs text-[var(--text-muted)] italic">
             {t.noProjects}
           </p>
         ) : (
@@ -594,7 +594,7 @@ export default function ProfileForm({
               return (
                 <div
                   key={idx}
-                  className="flex flex-col gap-2.5 p-4 bg-[#14141e]/50 border border-[#222232] rounded-xl relative group"
+                  className="flex flex-col gap-2.5 p-4 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl relative group"
                 >
                   <button
                     onClick={() => {
@@ -608,7 +608,7 @@ export default function ProfileForm({
                         projectsRu: updatedRu,
                       })
                     }}
-                    className="absolute top-3 right-3 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
+                    className="absolute top-3 right-3 text-[var(--text-muted)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
                     title="Remove project"
                   >
                     <X size={14} />
@@ -617,7 +617,7 @@ export default function ProfileForm({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {/* Project Name */}
                     <div className="flex flex-col gap-1 sm:col-span-2">
-                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                      <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
                         {t.projectName}
                       </span>
                       <input
@@ -641,13 +641,13 @@ export default function ProfileForm({
                             projectsRu: updatedRu,
                           })
                         }}
-                        className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                       />
                     </div>
 
                     {/* Descriptions */}
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                      <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
                         {data.multilingualReadme ? 'Description (Uzbek)' : t.projectDesc}
                       </span>
                       <input
@@ -659,13 +659,13 @@ export default function ProfileForm({
                           updated[idx] = { ...updated[idx], description: e.target.value }
                           update('featuredProjects', updated)
                         }}
-                        className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                       />
                     </div>
 
                     {data.multilingualReadme ? (
                       <div className="flex flex-col gap-1">
-                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                        <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
                           Description (English)
                         </span>
                         <input
@@ -677,14 +677,14 @@ export default function ProfileForm({
                             updatedEn[idx] = { ...projEn, description: e.target.value }
                             update('projectsEn', updatedEn)
                           }}
-                          className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                          className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                         />
                       </div>
                     ) : null}
 
                     {data.multilingualReadme ? (
                       <div className="flex flex-col gap-1 sm:col-span-2">
-                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                        <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
                           Description (Русский)
                         </span>
                         <input
@@ -696,7 +696,7 @@ export default function ProfileForm({
                             updatedRu[idx] = { ...projRu, description: e.target.value }
                             update('projectsRu', updatedRu)
                           }}
-                          className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                          className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                         />
                       </div>
                     ) : null}
@@ -709,11 +709,11 @@ export default function ProfileForm({
       </section>
 
       {/* ── Tech Stack ────────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
-        <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
               {t.techStack}
             </h2>
           </div>
@@ -725,7 +725,7 @@ export default function ProfileForm({
                 onChange={(e) => update('categorizeSkills', e.target.checked)}
                 className="accent-[#7C5CFC] w-3.5 h-3.5"
               />
-              <span className="text-gray-400 hover:text-gray-300 text-[11px] font-medium transition-colors">
+              <span className="text-[var(--text-muted)] hover:text-[var(--text-light)] text-[11px] font-medium transition-colors">
                 {t.categorize}
               </span>
             </label>
@@ -753,8 +753,8 @@ export default function ProfileForm({
                 title={skill}
                 className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border skill-glow-btn active:scale-95 transition-all duration-200 ${
                   active
-                    ? 'bg-[var(--glow-color)]/10 text-gray-100'
-                    : 'bg-[#14141e]/50 border-[#222232] hover:bg-[#7C5CFC]/5'
+                    ? 'bg-[var(--glow-color)]/10 text-[var(--text-main)]'
+                    : 'bg-[var(--bg-input)]/50 border-[var(--border-input)] hover:bg-[#7C5CFC]/5'
                 }`}
                 style={{
                   '--glow-color': glowColor,
@@ -783,10 +783,10 @@ export default function ProfileForm({
       </section>
 
       {/* ── GitHub Widgets & Theme ─────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
-        <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
             {t.widgetsAndTheme}
           </h2>
         </div>
@@ -794,7 +794,7 @@ export default function ProfileForm({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Theme Dropdown */}
           <div className="flex flex-col gap-1.5 relative">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
               {t.theme}
             </span>
             
@@ -805,10 +805,10 @@ export default function ProfileForm({
                 setThemeOpen(!themeOpen)
                 setLayoutDropdownOpen(false)
               }}
-              className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+              className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
             >
               <span>{THEMES.find((t) => t.value === data.theme)?.label || data.theme}</span>
-              <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Custom Select Options Dropdown */}
@@ -819,7 +819,7 @@ export default function ProfileForm({
                   className="fixed inset-0 z-10" 
                   onClick={() => setThemeOpen(false)}
                 />
-                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
+                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
                   {THEMES.map((t) => {
                     const isSelected = t.value === data.theme
                     return (
@@ -832,8 +832,8 @@ export default function ProfileForm({
                         }}
                         className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
                           isSelected
-                            ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
-                            : 'text-gray-300 hover:bg-[#7C5CFC]/5 hover:text-white'
+                            ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
+                            : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
                         }`}
                       >
                         <span>{t.label}</span>
@@ -848,7 +848,7 @@ export default function ProfileForm({
 
           {/* Layout Dropdown */}
           <div className="flex flex-col gap-1.5 relative">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
               {t.layout}
             </span>
             
@@ -859,10 +859,10 @@ export default function ProfileForm({
                 setLayoutDropdownOpen(!layoutDropdownOpen)
                 setThemeOpen(false)
               }}
-              className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+              className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
             >
               <span>{LAYOUT_TEMPLATES.find((t) => t.value === data.layoutTemplate)?.label || 'Classic (Markazlashtirilgan)'}</span>
-              <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${layoutDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${layoutDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Custom Select Options Dropdown */}
@@ -873,7 +873,7 @@ export default function ProfileForm({
                   className="fixed inset-0 z-10" 
                   onClick={() => setLayoutDropdownOpen(false)}
                 />
-                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
+                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
                   {LAYOUT_TEMPLATES.map((t) => {
                     const isSelected = t.value === data.layoutTemplate
                     return (
@@ -886,8 +886,8 @@ export default function ProfileForm({
                         }}
                         className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
                           isSelected
-                            ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
-                            : 'text-gray-300 hover:bg-[#7C5CFC]/5 hover:text-white'
+                            ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
+                            : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
                         }`}
                       >
                         <span>{t.label}</span>
@@ -912,7 +912,7 @@ export default function ProfileForm({
           ].map((item) => (
             <label
               key={item.key}
-              className="flex items-center gap-2 bg-[#14141e]/50 border border-[#222232] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
+              className="flex items-center gap-2 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
             >
               <input
                 type="checkbox"
@@ -920,7 +920,7 @@ export default function ProfileForm({
                 onChange={(e) => update(item.key, e.target.checked as never)}
                 className="accent-[#7C5CFC] w-4 h-4 shrink-0"
               />
-              <span className="text-gray-300 text-xs">{item.label}</span>
+              <span className="text-[var(--text-light)] text-xs">{item.label}</span>
             </label>
           ))}
         </div>
@@ -933,18 +933,18 @@ export default function ProfileForm({
       </section>
 
       {/* ── GitHub Publish / Deploy ─────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm border-t-[#7C5CFC]/20">
-        <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm border-t-[#7C5CFC]/20">
+        <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
               🚀 {t.commitToProfile.split(' ')[0]} Publish
             </h2>
           </div>
           {session.loggedIn && (
             <button
               onClick={onLogout}
-              className="text-[11px] text-gray-400 hover:text-red-400 transition-colors"
+              className="text-[11px] text-[var(--text-muted)] hover:text-red-400 transition-colors"
             >
               {t.logout}
             </button>
@@ -953,7 +953,7 @@ export default function ProfileForm({
 
         {!session.loggedIn ? (
           <div className="flex flex-col items-center gap-3 py-4 text-center">
-            <p className="text-xs text-gray-400 leading-normal max-w-sm">
+            <p className="text-xs text-[var(--text-muted)] leading-normal max-w-sm">
               Bu profilingizda maxsus repozitoriya (`username/username`) ochish va uning README.md faylini 1-klikda yangilash uchun kerak bo'ladi.
             </p>
             <a
@@ -966,7 +966,7 @@ export default function ProfileForm({
         ) : (
           <div className="flex flex-col gap-4">
             {/* User header */}
-            <div className="flex items-center gap-3 bg-[#14141e]/50 border border-[#222232] p-3 rounded-xl">
+            <div className="flex items-center gap-3 bg-[var(--bg-input)]/50 border border-[var(--border-input)] p-3 rounded-xl">
               <img
                 src={session.avatarUrl}
                 alt={session.username}
@@ -975,8 +975,8 @@ export default function ProfileForm({
                 className="rounded-full border border-[#7C5CFC]/30"
               />
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-gray-100">{session.name}</span>
-                <span className="text-[10px] text-gray-500">@{session.username}</span>
+                <span className="text-xs font-bold text-[var(--text-main)]">{session.name}</span>
+                <span className="text-[10px] text-[var(--text-muted)]">@{session.username}</span>
               </div>
               <span className="ml-auto text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-medium">
                 Connected

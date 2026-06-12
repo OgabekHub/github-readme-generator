@@ -31,6 +31,9 @@ export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
         Math.max(y, window.innerHeight - y)
       )
 
+      // Add temporary class to disable page-wide transitions during transition
+      document.documentElement.classList.add('theme-switching')
+
       // Start view transition
       // @ts-ignore
       const transition = document.startViewTransition(() => {
@@ -38,20 +41,24 @@ export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
       })
 
       transition.ready.then(() => {
-        const clipPath = [
-          `circle(0px at ${x}px ${y}px)`,
-          `circle(${endRadius}px at ${x}px ${y}px)`
-        ]
         document.documentElement.animate(
           {
-            clipPath: nextTheme === 'dark' ? [...clipPath].reverse() : clipPath
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${endRadius}px at ${x}px ${y}px)`
+            ]
           },
           {
-            duration: 500,
-            easing: 'ease-in-out',
-            pseudoElement: nextTheme === 'dark' ? '::view-transition-old(root)' : '::view-transition-new(root)'
+            duration: 450,
+            easing: 'ease-out',
+            pseudoElement: '::view-transition-new(root)'
           }
         )
+      })
+
+      // Clean up class after transition completes
+      transition.finished.then(() => {
+        document.documentElement.classList.remove('theme-switching')
       })
     } else {
       // Fallback: normal theme toggle
@@ -64,7 +71,7 @@ export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
       type="button"
       onClick={toggleTheme}
       aria-label="Toggle theme"
-      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#15151f] dark:bg-[#15151f] light:bg-[#f1f5f9] border border-[#2a2a3a] dark:border-[#2a2a3a] light:border-[#e2e8f0] text-gray-400 hover:text-gray-200 dark:hover:text-gray-200 light:hover:text-gray-700 hover:border-[#7C5CFC]/40 active:scale-90 transition-all duration-150 relative overflow-hidden group shadow-md"
+      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[#7C5CFC]/40 active:scale-90 transition-all duration-150 relative overflow-hidden group shadow-md"
     >
       <div className="relative w-4.5 h-4.5 transition-transform duration-500 group-hover:rotate-12">
         {theme === 'dark' ? (
