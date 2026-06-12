@@ -16,9 +16,11 @@ export default function Home() {
       <header className="sticky top-0 z-20 border-b border-[#2a2a3a] px-6 py-3.5 flex items-center justify-between bg-[#0a0a0f]/90 backdrop-blur-md">
         <div className="flex items-center gap-3">
           {/* Logo */}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7C5CFC] to-[#a855f7] flex items-center justify-center glow-pulse shrink-0">
-            <Sparkles size={17} className="text-white" />
-          </div>
+          <img
+            src="/logo.svg"
+            alt="GitHub README Generator Logo"
+            className="w-9 h-9 glow-pulse shrink-0 rounded-xl"
+          />
           <div>
             <h1 className="text-sm font-bold leading-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
               GitHub README Generator
