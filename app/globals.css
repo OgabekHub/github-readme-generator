@@ -5,6 +5,54 @@
 :root {
   --accent: #7c5cfc;
   --accent-light: #a78bfa;
+  
+  /* Default light mode variables */
+  --bg-main: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-input: #ffffff;
+  --border-card: rgba(226, 232, 240, 0.95);
+  --border-input: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-light: #334155;
+  --text-accent: #7c5cfc;
+  --glow-1: rgba(124, 92, 252, 0.04);
+  --glow-2: rgba(168, 85, 247, 0.04);
+  
+  color-scheme: light;
+}
+
+/* Class-based theme overrides */
+html.dark {
+  --bg-main: #07070c;
+  --bg-card: rgba(17, 17, 25, 0.7);
+  --bg-input: #15151f;
+  --border-card: rgba(35, 35, 51, 0.9);
+  --border-input: #2a2a3a;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-light: #d1d5db;
+  --text-accent: #a78bfa;
+  --glow-1: rgba(124, 92, 252, 0.08);
+  --glow-2: rgba(168, 85, 247, 0.08);
+  
+  color-scheme: dark;
+}
+
+html.light {
+  --bg-main: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.75);
+  --bg-input: #ffffff;
+  --border-card: rgba(226, 232, 240, 0.95);
+  --border-input: #e2e8f0;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-light: #334155;
+  --text-accent: #7c5cfc;
+  --glow-1: rgba(124, 92, 252, 0.04);
+  --glow-2: rgba(168, 85, 247, 0.04);
+  
+  color-scheme: light;
 }
 
 /* ── Scrollbar ───────────────────────────────────────── */
@@ -13,14 +61,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #15151f;
+  background: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a3a4a;
+  background: var(--border-input);
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #7c5cfc;
+  background: var(--accent);
 }
 
 /* ── Markdown preview ────────────────────────────────── */
@@ -28,9 +76,10 @@
 .md-preview h3 {
   font-weight: 700;
   margin: 0.5rem 0;
+  color: var(--text-main);
 }
 .md-preview hr {
-  border-color: #2a2a3a;
+  border-color: var(--border-input);
   margin: 1rem 0;
 }
 .md-preview img {
@@ -38,10 +87,55 @@
 }
 .md-preview p {
   margin: 0.5rem 0;
+  color: var(--text-light);
 }
 .md-preview ul {
   margin-left: 1.25rem;
   list-style: disc;
+  color: var(--text-light);
+}
+
+/* ── View Transitions ────────────────────────────────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+.dark::view-transition-old(root) {
+  z-index: 9999;
+}
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* ── Custom Skill Neon Glows ─────────────────────────── */
+.skill-glow-btn {
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.skill-glow-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0px var(--glow-color, rgba(124, 92, 252, 0));
+  opacity: 0;
+  transition: opacity 0.25s, box-shadow 0.25s;
+  z-index: -1;
+}
+.skill-glow-btn:hover {
+  border-color: var(--glow-color, #7C5CFC);
+  transform: translateY(-2px) scale(1.02);
+}
+.skill-glow-btn:hover::before {
+  opacity: 0.15;
+  box-shadow: 0 0 15px var(--glow-color, #7C5CFC);
 }
 
 /* ── Animations ──────────────────────────────────────── */
@@ -62,13 +156,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 12px #7c5cfc44; }
-  50%       { box-shadow: 0 0 24px #7c5cfc88; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  0%, 100% { box-shadow: 0 0 12px rgba(124, 92, 252, 0.25); }
+  50%       { box-shadow: 0 0 24px rgba(124, 92, 252, 0.5); }
 }
 
 .slide-down {
@@ -87,3 +176,4 @@
 .tab-content {
   animation: fadeIn 0.15s ease-out;
 }
+

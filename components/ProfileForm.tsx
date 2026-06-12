@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES } from '@/lib/readme-generator'
+import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES, SKILL_COLORS } from '@/lib/readme-generator'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
 import { TRANSLATIONS } from '@/lib/i18n'
 
@@ -745,16 +745,22 @@ export default function ProfileForm({
         <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-56 overflow-y-auto pr-1">
           {SKILL_OPTIONS.map((skill) => {
             const active = data.skills.includes(skill)
+            const glowColor = SKILL_COLORS[skill] || '#7C5CFC'
             return (
               <button
                 key={skill}
                 onClick={() => toggleSkill(skill)}
                 title={skill}
-                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 ${
+                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border skill-glow-btn active:scale-95 transition-all duration-200 ${
                   active
-                    ? 'bg-[#7C5CFC]/15 border-[#7C5CFC] shadow-[0_0_12px_#7C5CFC44]'
-                    : 'bg-[#14141e]/50 border-[#222232] hover:border-[#7C5CFC]/40 hover:bg-[#7C5CFC]/5'
+                    ? 'bg-[var(--glow-color)]/10 text-gray-100'
+                    : 'bg-[#14141e]/50 border-[#222232] hover:bg-[#7C5CFC]/5'
                 }`}
+                style={{
+                  '--glow-color': glowColor,
+                  borderColor: active ? glowColor : undefined,
+                  boxShadow: active ? `0 0 12px ${glowColor}25` : undefined
+                } as React.CSSProperties}
               >
                 <img
                   src={`https://skillicons.dev/icons?i=${skill}`}
@@ -765,9 +771,8 @@ export default function ProfileForm({
                   loading="lazy"
                 />
                 <span
-                  className={`text-[9px] leading-tight text-center w-full truncate ${
-                    active ? 'text-[#a78bfa]' : 'text-gray-500'
-                  }`}
+                  className="text-[9px] leading-tight text-center w-full truncate transition-colors duration-150"
+                  style={{ color: active ? glowColor : '#6b7280' }}
                 >
                   {skill}
                 </span>
