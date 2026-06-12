@@ -142,7 +142,7 @@ export default function ProfileForm({
     <div className="flex flex-col gap-6">
 
       {/* ── Basic Info ────────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-50">
         <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
           <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
@@ -222,7 +222,7 @@ export default function ProfileForm({
       </section>
 
       {/* ── Social Links ──────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-40">
         <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
           <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
@@ -553,7 +553,7 @@ export default function ProfileForm({
       </section>
 
       {/* ── Featured Projects ──────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-30">
         <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
@@ -709,7 +709,7 @@ export default function ProfileForm({
       </section>
 
       {/* ── Tech Stack ────────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-20">
         <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
@@ -783,7 +783,7 @@ export default function ProfileForm({
       </section>
 
       {/* ── GitHub Widgets & Theme ─────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-10">
         <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
           <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
