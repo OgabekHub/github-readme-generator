@@ -28,7 +28,7 @@ export const SKILL_OPTIONS = [
   'vue', 'angular', 'svelte', 'tailwind', 'css', 'html', 'sass',
   'mongodb', 'postgres', 'mysql', 'redis', 'docker', 'kubernetes',
   'aws', 'gcp', 'azure', 'git', 'github', 'figma', 'graphql',
-  'flutter', 'kotlin', 'swift', 'cpp', 'csharp', 'dotnet',
+  'flutter', 'kotlin', 'swift', 'cpp', 'cs', 'dotnet',
 ]
 
 export const THEMES = [

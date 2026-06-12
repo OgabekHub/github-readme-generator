@@ -94,7 +94,7 @@ const LANGUAGE_TO_SKILL: Record<string, string> = {
   Swift: 'swift',
   Kotlin: 'kotlin',
   'C++': 'cpp',
-  'C#': 'csharp',
+  'C#': 'cs',
   Dart: 'flutter',
   Vue: 'vue',
   Ruby: 'ruby',

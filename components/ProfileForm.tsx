@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ProfileData, SKILL_OPTIONS, THEMES } from '@/lib/readme-generator'
-import { X, Sparkles, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
 
 interface FormProps {
   data: ProfileData
@@ -45,6 +45,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
   const [analyzing, setAnalyzing] = useState(false)
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [themeOpen, setThemeOpen] = useState(false)
 
   const update = <K extends keyof ProfileData>(key: K, value: ProfileData[K]) => {
     onChange({ ...data, [key]: value })
@@ -437,22 +438,55 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           </h2>
         </div>
 
-        <label className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 relative">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
             Theme
           </span>
-          <select
-            value={data.theme}
-            onChange={(e) => update('theme', e.target.value)}
-            className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
+          
+          {/* Custom Select Trigger */}
+          <button
+            type="button"
+            onClick={() => setThemeOpen(!themeOpen)}
+            className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
           >
-            {THEMES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span>{THEMES.find((t) => t.value === data.theme)?.label || data.theme}</span>
+            <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Custom Select Options Dropdown */}
+          {themeOpen && (
+            <>
+              {/* Backdrop */}
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setThemeOpen(false)}
+              />
+              <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
+                {THEMES.map((t) => {
+                  const isSelected = t.value === data.theme
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => {
+                        update('theme', t.value)
+                        setThemeOpen(false)
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
+                          : 'text-gray-300 hover:bg-[#7C5CFC]/5 hover:text-white'
+                      }`}
+                    >
+                      <span>{t.label}</span>
+                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-2">
           {[
