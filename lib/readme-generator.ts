@@ -59,21 +59,21 @@ export const LAYOUT_TEMPLATES = [
 
 const SOCIAL_ICONS: Record<string, (val: string) => string> = {
   twitter: (v) =>
-    `[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/${v.replace('@', '')})`,
+    `<a href="https://twitter.com/${v.replace('@', '')}" target="_blank"><img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter" /></a>`,
   linkedin: (v) =>
-    `[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](${v.startsWith('http') ? v : `https://linkedin.com/in/${v}`})`,
+    `<a href="${v.startsWith('http') ? v : `https://linkedin.com/in/${v}`}" target="_blank"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>`,
   telegram: (v) =>
-    `[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/${v.replace('@', '')})`,
+    `<a href="https://t.me/${v.replace('@', '')}" target="_blank"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram" /></a>`,
   facebook: (v) =>
-    `[![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](${v.startsWith('http') ? v : `https://facebook.com/${v}`})`,
+    `<a href="${v.startsWith('http') ? v : `https://facebook.com/${v}`}" target="_blank"><img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" /></a>`,
   instagram: (v) =>
-    `[![Instagram](https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://instagram.com/${v.replace('@', '')})`,
+    `<a href="https://instagram.com/${v.replace('@', '')}" target="_blank"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" /></a>`,
   youtube: (v) =>
-    `[![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](${v.startsWith('http') ? v : `https://youtube.com/${v}`})`,
+    `<a href="${v.startsWith('http') ? v : `https://youtube.com/${v}`}" target="_blank"><img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" /></a>`,
   website: (v) =>
-    `[![Website](https://img.shields.io/badge/Website-7C5CFC?style=for-the-badge&logo=googlechrome&logoColor=white)](${v.startsWith('http') ? v : `https://${v}`})`,
+    `<a href="${v.startsWith('http') ? v : `https://${v}`}" target="_blank"><img src="https://img.shields.io/badge/Website-7C5CFC?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website" /></a>`,
   email: (v) =>
-    `[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:${v})`,
+    `<a href="mailto:${v}"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" /></a>`,
 }
 
 export function generateReadme(data: ProfileData, hostUrl: string = 'https://github-readme-generator.vercel.app'): string {
@@ -143,7 +143,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
 
     if (socialBadges.length > 0) {
       lines.push('<p align="center">')
-      lines.push(socialBadges.join('\n'))
+      lines.push(`  ${socialBadges.join(' ')}`)
       lines.push('</p>')
       lines.push('')
     }
@@ -172,7 +172,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
 
     if (socialBadges.length > 0) {
       lines.push('<p align="center">')
-      lines.push(socialBadges.join('\n'))
+      lines.push(`  ${socialBadges.join(' ')}`)
       lines.push('</p>')
       lines.push('')
     }
