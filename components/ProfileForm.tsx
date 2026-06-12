@@ -742,7 +742,7 @@ export default function ProfileForm({
         </div>
 
         {/* Icon grid — shows actual skillicons.dev images */}
-        <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-56 overflow-y-auto pr-1">
+        <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-56 overflow-y-auto p-2 pr-3 -mx-2">
           {SKILL_OPTIONS.map((skill) => {
             const active = data.skills.includes(skill)
             const glowColor = SKILL_COLORS[skill] || '#7C5CFC'
