@@ -87,9 +87,13 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
 export async function POST(req: NextRequest) {
   // Parse body
   let username: string
+  let tone = 'professional'
+  let instructions = ''
   try {
     const body = await req.json()
     username = (body.username ?? '').trim()
+    tone = (body.tone ?? 'professional').trim()
+    instructions = (body.instructions ?? '').trim()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
@@ -118,34 +122,77 @@ export async function POST(req: NextRequest) {
     const skills      = detectSkills(repos)
     const socialLinks = mapSocials(socials)
 
-    const topRepos = repos.slice(0, 8).map((r) => r.name).join(', ')
+    const featuredRepos = repos.slice(0, 3).map((r) => ({
+      name: r.name,
+      description: r.description ?? '',
+    }))
+
     const languages = [
       ...new Set(repos.map((r) => r.language).filter(Boolean).slice(0, 8)),
     ].join(', ')
 
-    const prompt = `You are helping a software developer write a concise GitHub profile bio.
+    let promptInstructions = ''
+    if (tone === 'minimalist') {
+      promptInstructions = 'Write a very clean, minimalist, developer-focused bio of 1-2 short sentences (max 15-20 words). It should be extremely concise, using no fluff.'
+    } else if (tone === 'creative') {
+      promptInstructions = 'Write a highly creative, slightly humorous, and engaging developer bio of 2-3 short sentences. Include a clever pun or play on words, and make it sound witty, conversational, and highly unique.'
+    } else if (tone === 'hacker') {
+      promptInstructions = "Write a hacker-style, geeky developer bio of 2-3 short sentences. Make it sound like it's written by a terminal enthusiast or hardcore systems engineer (e.g., using terms like 'compiling', 'debugging', 'building systems'), but keep it highly professional."
+    } else {
+      promptInstructions = 'Write a compelling, professional, developer-focused bio of 2-3 short sentences that sounds natural, genuine, and highlights their core engineering passion.'
+    }
+
+    if (instructions) {
+      promptInstructions += `\nAdditional custom instruction from the user: "${instructions}". Incorporate this detail naturally into the bio.`
+    }
+
+    const prompt = `You are helping a software developer write a concise GitHub profile README.
 
 Based on the following information about them:
 - GitHub username: ${user.login}
 - Display name: ${user.name ?? 'not set'}
 - Current bio: ${user.bio ?? 'none'}
 - Location: ${user.location ?? 'unknown'}
-- Public repositories: ${user.public_repos}
-- Notable repositories: ${topRepos || 'none'}
 - Programming languages: ${languages || 'various'}
+- Top repositories to showcase:
+${featuredRepos.map((r) => `- Name: ${r.name}\n  Current Description: ${r.description || 'none'}`).join('\n')}
 
-Write a compelling, developer-focused bio of 2–3 short sentences that:
-1. Sounds natural and genuine — not like a CV or job description
-2. Highlights what they build or are passionate about
-3. May optionally include their location or a fun detail
-4. Uses NO first person (no "I", "my", "me")
+We need two things:
+1. A developer-focused bio matching these style instructions:
+${promptInstructions}
+Core bio rules:
+- Uses NO first person (no "I", "my", "me", "we", "our"). All sentences must be in the third-person or passive form.
 
-Return ONLY the bio text, with no quotes, labels, or extra commentary.`
+2. A list of their top 3 featured projects, each with a brief, attractive, developer-focused 1-sentence description. Use the current descriptions as context but rewrite them to sound catchy, punchy, and professional.
 
-    const bio = await callGemini(apiKey, prompt)
+Return the result ONLY as a raw JSON object with the following structure (do not include markdown code block formatting or backticks, just raw JSON text):
+{
+  "bio": "the generated bio string",
+  "projects": [
+    {
+      "name": "project-name",
+      "description": "the rewritten catchy description"
+    }
+  ]
+}`
+
+    const rawResult = await callGemini(apiKey, prompt)
+    const jsonText = rawResult
+      .replace(/^```json\s*/i, '')
+      .replace(/```\s*$/g, '')
+      .trim()
+
+    let aiData = { bio: '', projects: [] as { name: string; description: string }[] }
+    try {
+      aiData = JSON.parse(jsonText)
+    } catch (e) {
+      console.error('[analyze] Failed to parse AI JSON:', jsonText, e)
+      aiData = { bio: rawResult, projects: [] }
+    }
 
     return NextResponse.json({
-      bio,
+      bio:       aiData.bio || '',
+      projects:  aiData.projects || [],
       skills,
       name:      user.name ?? '',
       location:  user.location ?? '',

@@ -13,6 +13,10 @@ export interface ProfileData {
   website: string
   email: string
   skills: string[]
+  categorizeSkills: boolean
+  layoutTemplate: string
+  featuredProjects: { name: string; description: string }[]
+  showBanner: boolean
   showStats: boolean
   showStreak: boolean
   showTopLangs: boolean
@@ -42,6 +46,12 @@ export const THEMES = [
   { value: 'cobalt', label: 'Cobalt (Blue)' },
 ]
 
+export const LAYOUT_TEMPLATES = [
+  { value: 'classic', label: 'Classic (Markazlashtirilgan)' },
+  { value: 'minimalist', label: 'Minimalist (Oddiy & Qisqa)' },
+  { value: 'cyberpunk', label: 'Cyberpunk (Neon / Kiber)' },
+]
+
 const SOCIAL_ICONS: Record<string, (val: string) => string> = {
   twitter: (v) =>
     `[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/${v.replace('@', '')})`,
@@ -61,84 +71,252 @@ const SOCIAL_ICONS: Record<string, (val: string) => string> = {
     `[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:${v})`,
 }
 
-export function generateReadme(data: ProfileData): string {
+export function generateReadme(data: ProfileData, hostUrl: string = 'https://github-readme-generator.vercel.app'): string {
   const lines: string[] = []
+  const template = data.layoutTemplate || 'classic'
 
-  // Header
-  lines.push(
-    `<h1 align="center">Hi 👋, I'm ${data.name || 'Your Name'}</h1>`
-  )
-  if (data.title) {
-    lines.push(`<h3 align="center">${data.title}</h3>`)
-  }
-  lines.push('')
-
-  // Bio
-  if (data.bio) {
-    lines.push(`<p align="center">${data.bio}</p>`)
+  // Banner
+  if (data.showBanner) {
+    const bannerUrl = `${hostUrl}/api/banner?name=${encodeURIComponent(data.name || 'Developer')}&title=${encodeURIComponent(data.title || 'Full-Stack Developer')}&theme=${data.theme}`
+    const align = template === 'minimalist' ? 'left' : 'center'
+    lines.push(`<p align="${align}">`)
+    lines.push(`  <img src="${bannerUrl}" alt="Banner" width="850"/>`)
+    lines.push(`</p>`)
     lines.push('')
   }
 
-  // Social badges
-  const socialBadges: string[] = []
-  if (data.twitter) socialBadges.push(SOCIAL_ICONS.twitter(data.twitter))
-  if (data.linkedin) socialBadges.push(SOCIAL_ICONS.linkedin(data.linkedin))
-  if (data.telegram) socialBadges.push(SOCIAL_ICONS.telegram(data.telegram))
-  if (data.facebook) socialBadges.push(SOCIAL_ICONS.facebook(data.facebook))
-  if (data.instagram) socialBadges.push(SOCIAL_ICONS.instagram(data.instagram))
-  if (data.youtube) socialBadges.push(SOCIAL_ICONS.youtube(data.youtube))
-  if (data.website) socialBadges.push(SOCIAL_ICONS.website(data.website))
-  if (data.email) socialBadges.push(SOCIAL_ICONS.email(data.email))
+  // Header & Bio & Socials
+  if (template === 'minimalist') {
+    lines.push(`# ${data.name || 'Your Name'}`)
+    if (data.title) {
+      lines.push(`> ${data.title}`)
+      lines.push('')
+    }
+    if (data.bio) {
+      lines.push(data.bio)
+      lines.push('')
+    }
+    
+    // Social Links
+    const socialLinks: string[] = []
+    if (data.twitter) socialLinks.push(`[Twitter](https://twitter.com/${data.twitter.replace('@', '')})`)
+    if (data.linkedin) socialLinks.push(`[LinkedIn](${data.linkedin.startsWith('http') ? data.linkedin : `https://linkedin.com/in/${data.linkedin}`})`)
+    if (data.telegram) socialLinks.push(`[Telegram](https://t.me/${data.telegram.replace('@', '')})`)
+    if (data.facebook) socialLinks.push(`[Facebook](${data.facebook.startsWith('http') ? data.facebook : `https://facebook.com/${data.facebook}`})`)
+    if (data.instagram) socialLinks.push(`[Instagram](https://instagram.com/${data.instagram.replace('@', '')})`)
+    if (data.youtube) socialLinks.push(`[YouTube](${data.youtube.startsWith('http') ? data.youtube : `https://youtube.com/${data.youtube}`})`)
+    if (data.website) socialLinks.push(`[Website](${data.website.startsWith('http') ? data.website : `https://${data.website}`})`)
+    if (data.email) socialLinks.push(`[Email](mailto:${data.email})`)
 
-  if (socialBadges.length > 0) {
-    lines.push('<p align="center">')
-    lines.push(socialBadges.join('\n'))
-    lines.push('</p>')
+    if (socialLinks.length > 0) {
+      lines.push(socialLinks.join(' • '))
+      lines.push('')
+    }
+  } else if (template === 'cyberpunk') {
+    lines.push(`# ─── ⚡ CORE_SYSTEM // ${(data.name || 'DEVELOPER').toUpperCase()} ⚡ ───`)
+    if (data.title) {
+      lines.push(`> **STATUS:** ${(data.title || 'ACTIVE_SYSTEM_OPERATOR').toUpperCase()}`)
+      lines.push('')
+    }
+    if (data.bio) {
+      lines.push('```')
+      lines.push(`[SYSTEM_INFO]: ${data.bio}`)
+      lines.push('```')
+      lines.push('')
+    }
+
+    // Social badges
+    const socialBadges: string[] = []
+    if (data.twitter) socialBadges.push(SOCIAL_ICONS.twitter(data.twitter))
+    if (data.linkedin) socialBadges.push(SOCIAL_ICONS.linkedin(data.linkedin))
+    if (data.telegram) socialBadges.push(SOCIAL_ICONS.telegram(data.telegram))
+    if (data.facebook) socialBadges.push(SOCIAL_ICONS.facebook(data.facebook))
+    if (data.instagram) socialBadges.push(SOCIAL_ICONS.instagram(data.instagram))
+    if (data.youtube) socialBadges.push(SOCIAL_ICONS.youtube(data.youtube))
+    if (data.website) socialBadges.push(SOCIAL_ICONS.website(data.website))
+    if (data.email) socialBadges.push(SOCIAL_ICONS.email(data.email))
+
+    if (socialBadges.length > 0) {
+      lines.push('<p align="center">')
+      lines.push(socialBadges.join('\n'))
+      lines.push('</p>')
+      lines.push('')
+    }
+  } else {
+    // Classic (existing)
+    lines.push(`<h1 align="center">Hi 👋, I'm ${data.name || 'Your Name'}</h1>`)
+    if (data.title) {
+      lines.push(`<h3 align="center">${data.title}</h3>`)
+    }
     lines.push('')
+
+    if (data.bio) {
+      lines.push(`<p align="center">${data.bio}</p>`)
+      lines.push('')
+    }
+
+    const socialBadges: string[] = []
+    if (data.twitter) socialBadges.push(SOCIAL_ICONS.twitter(data.twitter))
+    if (data.linkedin) socialBadges.push(SOCIAL_ICONS.linkedin(data.linkedin))
+    if (data.telegram) socialBadges.push(SOCIAL_ICONS.telegram(data.telegram))
+    if (data.facebook) socialBadges.push(SOCIAL_ICONS.facebook(data.facebook))
+    if (data.instagram) socialBadges.push(SOCIAL_ICONS.instagram(data.instagram))
+    if (data.youtube) socialBadges.push(SOCIAL_ICONS.youtube(data.youtube))
+    if (data.website) socialBadges.push(SOCIAL_ICONS.website(data.website))
+    if (data.email) socialBadges.push(SOCIAL_ICONS.email(data.email))
+
+    if (socialBadges.length > 0) {
+      lines.push('<p align="center">')
+      lines.push(socialBadges.join('\n'))
+      lines.push('</p>')
+      lines.push('')
+    }
   }
 
   // Location & fun fact
   if (data.location || data.funFact) {
-    lines.push('---')
+    if (template === 'cyberpunk') {
+      lines.push('// ──────────────────────────────────────────────')
+    } else {
+      lines.push('---')
+    }
     lines.push('')
     if (data.location) lines.push(`- 📍 Based in **${data.location}**`)
     if (data.funFact) lines.push(`- ⚡ Fun fact: ${data.funFact}`)
     lines.push('')
   }
 
+  // Featured Projects
+  if (data.featuredProjects && data.featuredProjects.length > 0) {
+    if (template === 'cyberpunk') {
+      lines.push('### ⚡ ACTIVE_MISSIONS')
+    } else if (template === 'minimalist') {
+      lines.push('### Featured Projects')
+    } else {
+      lines.push('### 🚀 Featured Projects')
+    }
+    lines.push('')
+    for (const proj of data.featuredProjects) {
+      if (proj.name.trim()) {
+        const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
+        if (template === 'cyberpunk') {
+          lines.push(`- **[${proj.name}](${url})** » ${proj.description || 'mission objectives description'}`)
+        } else {
+          lines.push(`- **[${proj.name}](${url})** — ${proj.description || 'catchy project description'}`)
+        }
+      }
+    }
+    lines.push('')
+  }
+
+const SKILL_CATEGORIES = {
+  frontend: [
+    'html', 'css', 'javascript', 'typescript', 'react', 'nextjs', 'vue',
+    'angular', 'svelte', 'tailwind', 'sass', 'figma'
+  ],
+  backend: [
+    'nodejs', 'python', 'django', 'fastapi', 'java', 'go', 'rust',
+    'php', 'laravel', 'cpp', 'cs', 'dotnet', 'graphql', 'mongodb',
+    'postgres', 'mysql', 'redis'
+  ],
+  tools: [
+    'docker', 'kubernetes', 'aws', 'gcp', 'azure', 'git', 'github',
+    'flutter', 'kotlin', 'swift'
+  ]
+}
+
   // Skills
   if (data.skills.length > 0) {
-    lines.push('### 🛠️ Tech Stack')
+    if (template === 'cyberpunk') {
+      lines.push('### 🛠️ STACK_CAPABILITIES')
+    } else if (template === 'minimalist') {
+      lines.push('### Tech Stack')
+    } else {
+      lines.push('### 🛠️ Tech Stack')
+    }
     lines.push('')
-    lines.push(
-      `<p align="center">${data.skills
-        .map(
-          (s) =>
-            `<img src="https://skillicons.dev/icons?i=${s}" alt="${s}" width="40" height="40"/>`
+
+    if (template === 'minimalist') {
+      if (data.categorizeSkills) {
+        const frontend = data.skills.filter(s => SKILL_CATEGORIES.frontend.includes(s))
+        const backend = data.skills.filter(s => SKILL_CATEGORIES.backend.includes(s))
+        const tools = data.skills.filter(s => SKILL_CATEGORIES.tools.includes(s))
+
+        if (frontend.length > 0) lines.push(`- **Frontend**: ${frontend.join(', ')}`)
+        if (backend.length > 0) lines.push(`- **Backend & Databases**: ${backend.join(', ')}`)
+        if (tools.length > 0) lines.push(`- **DevOps, Mobile & Tools**: ${tools.join(', ')}`)
+      } else {
+        lines.push(`**Skills**: ${data.skills.join(', ')}`)
+      }
+      lines.push('')
+    } else {
+      // Classic & Cyberpunk use icon badges
+      if (data.categorizeSkills) {
+        const frontend = data.skills.filter(s => SKILL_CATEGORIES.frontend.includes(s))
+        const backend = data.skills.filter(s => SKILL_CATEGORIES.backend.includes(s))
+        const tools = data.skills.filter(s => SKILL_CATEGORIES.tools.includes(s))
+
+        const align = template === 'cyberpunk' ? 'left' : 'center'
+
+        if (frontend.length > 0) {
+          lines.push('#### 💻 Frontend')
+          lines.push('')
+          lines.push(`<p align="${align}">${frontend.map(s => `<img src="https://skillicons.dev/icons?i=${s}" alt="${s}" width="40" height="40"/>`).join(' ')}</p>`)
+          lines.push('')
+        }
+        if (backend.length > 0) {
+          lines.push('#### ⚙️ Backend & Databases')
+          lines.push('')
+          lines.push(`<p align="${align}">${backend.map(s => `<img src="https://skillicons.dev/icons?i=${s}" alt="${s}" width="40" height="40"/>`).join(' ')}</p>`)
+          lines.push('')
+        }
+        if (tools.length > 0) {
+          lines.push('#### 🛠️ DevOps, Mobile & Tools')
+          lines.push('')
+          lines.push(`<p align="${align}">${tools.map(s => `<img src="https://skillicons.dev/icons?i=${s}" alt="${s}" width="40" height="40"/>`).join(' ')}</p>`)
+          lines.push('')
+        }
+      } else {
+        const align = template === 'cyberpunk' ? 'left' : 'center'
+        lines.push(
+          `<p align="${align}">${data.skills
+            .map(
+              (s) =>
+                `<img src="https://skillicons.dev/icons?i=${s}" alt="${s}" width="40" height="40"/>`
+            )
+            .join(' ')}</p>`
         )
-        .join(' ')}</p>`
-    )
-    lines.push('')
+        lines.push('')
+      }
+    }
   }
 
   // GitHub stats
   if (data.showStats || data.showTopLangs || data.showStreak) {
-    lines.push('### 📊 GitHub Stats')
+    if (template === 'cyberpunk') {
+      lines.push('### 📊 SYSTEM_METRICS')
+    } else {
+      lines.push('### 📊 GitHub Stats')
+    }
     lines.push('')
-    lines.push('<p align="center">')
+
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
+
+    lines.push(`<p align="${align}">`)
 
     if (data.showStats) {
       lines.push(
         `<img src="https://github-readme-stats.vercel.app/api?username=${
           data.github || 'yourusername'
-        }&show_icons=true&theme=${data.theme}&hide_border=true&count_private=true" alt="GitHub Stats" height="165"/>`
+        }&show_icons=true&theme=${statsTheme}&hide_border=true&count_private=true" alt="GitHub Stats" height="165"/>`
       )
     }
     if (data.showStreak) {
       lines.push(
         `<img src="https://github-readme-streak-stats.herokuapp.com/?user=${
           data.github || 'yourusername'
-        }&theme=${data.theme}&hide_border=true" alt="GitHub Streak" height="165"/>`
+        }&theme=${statsTheme}&hide_border=true" alt="GitHub Streak" height="165"/>`
       )
     }
 
@@ -146,11 +324,11 @@ export function generateReadme(data: ProfileData): string {
     lines.push('')
 
     if (data.showTopLangs) {
-      lines.push('<p align="center">')
+      lines.push(`<p align="${align}">`)
       lines.push(
         `<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=${
           data.github || 'yourusername'
-        }&layout=compact&theme=${data.theme}&hide_border=true" alt="Top Languages"/>`
+        }&layout=compact&theme=${statsTheme}&hide_border=true" alt="Top Languages"/>`
       )
       lines.push('</p>')
       lines.push('')
@@ -159,13 +337,19 @@ export function generateReadme(data: ProfileData): string {
 
   // Trophies
   if (data.showTrophies) {
-    lines.push('### 🏆 Trophies')
+    if (template === 'cyberpunk') {
+      lines.push('### 🏆 SYSTEM_ACHIEVEMENTS')
+    } else {
+      lines.push('### 🏆 Trophies')
+    }
     lines.push('')
-    lines.push('<p align="center">')
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
+    lines.push(`<p align="${align}">`)
     lines.push(
       `<img src="https://github-profile-trophy.vercel.app/?username=${
         data.github || 'yourusername'
-      }&theme=${data.theme}&no-frame=true&row=1&column=6" alt="Trophies"/>`
+      }&theme=${statsTheme}&no-frame=true&row=1&column=6" alt="Trophies"/>`
     )
     lines.push('</p>')
     lines.push('')
@@ -173,18 +357,31 @@ export function generateReadme(data: ProfileData): string {
 
   // Visitor badge
   if (data.showVisitorBadge && data.github) {
-    lines.push('---')
+    if (template === 'cyberpunk') {
+      lines.push('// ──────────────────────────────────────────────')
+    } else {
+      lines.push('---')
+    }
     lines.push('')
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const badgeColor = template === 'cyberpunk' ? 'ff0055' : '7c5cfc'
     lines.push(
-      `<p align="center"><img src="https://komarev.com/ghpvc/?username=${data.github}&label=Profile%20Views&color=7c5cfc&style=for-the-badge" alt="Profile Views"/></p>`
+      `<p align="${align}"><img src="https://komarev.com/ghpvc/?username=${data.github}&label=Profile%20Views&color=${badgeColor}&style=for-the-badge" alt="Profile Views"/></p>`
     )
     lines.push('')
   }
 
-  lines.push('---')
-  lines.push(
-    '<p align="center"><i>Generated with ❤️ using GitHub README Generator</i></p>'
-  )
+  if (template === 'cyberpunk') {
+    lines.push('// ──────────────────────────────────────────────')
+    lines.push(
+      '<p align="center"><i>// SYSTEM_GENERATED // BY_README_GEN // TERMINAL_EOF</i></p>'
+    )
+  } else {
+    lines.push('---')
+    lines.push(
+      '<p align="center"><i>Generated with ❤️ using GitHub README Generator</i></p>'
+    )
+  }
 
   return lines.join('\n')
 }
@@ -204,6 +401,10 @@ export const DEFAULT_DATA: ProfileData = {
   website: '',
   email: '',
   skills: [],
+  categorizeSkills: false,
+  layoutTemplate: 'classic',
+  featuredProjects: [],
+  showBanner: false,
   showStats: true,
   showStreak: true,
   showTopLangs: true,

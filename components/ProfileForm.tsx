@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ProfileData, SKILL_OPTIONS, THEMES } from '@/lib/readme-generator'
+import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES } from '@/lib/readme-generator'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
 
 interface FormProps {
@@ -21,6 +21,7 @@ interface AISuggestion {
   youtube: string
   telegram: string
   facebook: string
+  projects?: { name: string; description: string }[]
 }
 
 /* ── Reusable text input ──────────────────────────────── */
@@ -46,6 +47,13 @@ export default function ProfileForm({ data, onChange }: FormProps) {
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
   const [themeOpen, setThemeOpen] = useState(false)
+  const [layoutDropdownOpen, setLayoutDropdownOpen] = useState(false)
+  
+  // AI Options state
+  const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
+  const [aiTone, setAiTone] = useState<'professional' | 'minimalist' | 'creative' | 'hacker'>('professional')
+  const [aiInstructions, setAiInstructions] = useState('')
+  const [toneDropdownOpen, setToneDropdownOpen] = useState(false)
 
   const update = <K extends keyof ProfileData>(key: K, value: ProfileData[K]) => {
     onChange({ ...data, [key]: value })
@@ -68,7 +76,11 @@ export default function ProfileForm({ data, onChange }: FormProps) {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: data.github }),
+        body: JSON.stringify({ 
+          username: data.github,
+          tone: aiTone,
+          instructions: aiInstructions
+        }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Tahlil muvaffaqiyatsiz')
@@ -85,17 +97,18 @@ export default function ProfileForm({ data, onChange }: FormProps) {
     if (!suggestion) return
     onChange({
       ...data,
-      bio:       suggestion.bio       || data.bio,
-      name:      suggestion.name      || data.name,
-      location:  suggestion.location  || data.location,
-      website:   suggestion.website   || data.website,
-      twitter:   suggestion.twitter   || data.twitter,
-      linkedin:  suggestion.linkedin  || data.linkedin,
-      instagram: suggestion.instagram || data.instagram,
-      youtube:   suggestion.youtube   || data.youtube,
-      telegram:  suggestion.telegram  || data.telegram,
-      facebook:  suggestion.facebook  || data.facebook,
-      skills:    suggestion.skills.length > 0 ? suggestion.skills : data.skills,
+      bio:              suggestion.bio       || data.bio,
+      name:             suggestion.name      || data.name,
+      location:         suggestion.location  || data.location,
+      website:          suggestion.website   || data.website,
+      twitter:          suggestion.twitter   || data.twitter,
+      linkedin:         suggestion.linkedin  || data.linkedin,
+      instagram:        suggestion.instagram || data.instagram,
+      youtube:          suggestion.youtube   || data.youtube,
+      telegram:         suggestion.telegram  || data.telegram,
+      facebook:         suggestion.facebook  || data.facebook,
+      skills:           suggestion.skills.length > 0 ? suggestion.skills : data.skills,
+      featuredProjects: suggestion.projects && suggestion.projects.length > 0 ? suggestion.projects : data.featuredProjects,
     })
     setSuggestion(null)
   }
@@ -190,6 +203,86 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               </span>
             </button>
           </div>
+        </div>
+
+        {/* AI Options Toggle */}
+        <div className="border-t border-[#232333]/60 pt-3">
+          <button
+            type="button"
+            onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+          >
+            <span>⚙️ AI Sozlamalari</span>
+            <span className="text-[10px]">{aiSettingsOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {aiSettingsOpen && (
+            <div className="flex flex-col gap-3 mt-3 slide-down bg-[#14141e]/30 border border-[#222232]/50 p-3.5 rounded-xl">
+              {/* Tone Selection */}
+              <div className="flex flex-col gap-1.5 relative">
+                <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                  Bio Ohangi (Tone)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setToneDropdownOpen(!toneDropdownOpen)}
+                  className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-1.5 text-xs text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+                >
+                  <span>
+                    {aiTone === 'professional' && '💼 Professional (Jiddiy)'}
+                    {aiTone === 'minimalist' && '🔍 Minimalist (Qisqa)'}
+                    {aiTone === 'creative' && '🎨 Creative / Funny (Kreativ)'}
+                    {aiTone === 'hacker' && '💻 Hacker Style (Kiber-punk)'}
+                  </span>
+                  <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${toneDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {toneDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setToneDropdownOpen(false)} />
+                    <div className="absolute top-[calc(100%+4px)] left-0 w-full z-40 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto backdrop-blur-md">
+                      {[
+                        { value: 'professional', label: '💼 Professional (Jiddiy)' },
+                        { value: 'minimalist', label: '🔍 Minimalist (Qisqa)' },
+                        { value: 'creative', label: '🎨 Creative / Funny (Kreativ)' },
+                        { value: 'hacker', label: '💻 Hacker Style (Kiber-punk)' },
+                      ].map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => {
+                            setAiTone(t.value as any)
+                            setToneDropdownOpen(false)
+                          }}
+                          className={`w-full text-left px-3.5 py-1.5 text-xs transition-all duration-150 ${
+                            aiTone === t.value
+                              ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
+                              : 'text-gray-300 hover:bg-[#7C5CFC]/5'
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Custom Instructions */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                  Qo'shimcha ko'rsatmalar
+                </span>
+                <textarea
+                  placeholder="Masalan: Men choyni yaxshi ko'raman deb yoz, yoki React/Web3 ga ko'proq urg'u ber..."
+                  value={aiInstructions}
+                  onChange={(e) => setAiInstructions(e.target.value)}
+                  rows={2}
+                  className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* AI error */}
@@ -303,6 +396,25 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               </div>
             )}
 
+            {/* Suggested projects */}
+            {suggestion.projects && suggestion.projects.length > 0 && (
+              <div className="flex flex-col gap-1.5 border-t border-[#7C5CFC]/20 pt-2.5">
+                <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
+                  Tavsiya etilgan top loyihalar
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  {suggestion.projects.map((p, idx) => (
+                    <div key={idx} className="bg-[#14141e]/50 border border-[#222232]/70 p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
+                      <span className="font-semibold text-gray-200 flex items-center gap-1">
+                        🚀 {p.name}
+                      </span>
+                      <p className="text-gray-400 leading-normal">{p.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-2 pt-1">
               <button
@@ -373,6 +485,89 @@ export default function ProfileForm({ data, onChange }: FormProps) {
         </div>
       </section>
 
+      {/* ── Featured Projects ──────────────────────────── */}
+      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+              Featured Projects
+            </h2>
+          </div>
+          {data.featuredProjects.length < 5 && (
+            <button
+              onClick={() => {
+                const updated = [...data.featuredProjects, { name: '', description: '' }]
+                update('featuredProjects', updated)
+              }}
+              className="text-xs font-semibold text-[#a78bfa] hover:text-[#c084fc] transition-colors"
+            >
+              + Yangi loyiha
+            </button>
+          )}
+        </div>
+
+        {data.featuredProjects.length === 0 ? (
+          <p className="text-xs text-gray-500 italic">
+            Hozircha loyihalar yo'q. Loyiha nomi va tavsifini qo'shish uchun yuqoridagi tugmani bosing yoki AI Tahlil orqali generatsiya qiling.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {data.featuredProjects.map((project, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col gap-2 p-3 bg-[#14141e]/50 border border-[#222232] rounded-xl relative group"
+              >
+                <button
+                  onClick={() => {
+                    const updated = data.featuredProjects.filter((_, i) => i !== idx)
+                    update('featuredProjects', updated)
+                  }}
+                  className="absolute top-2.5 right-2.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
+                  title="Remove project"
+                >
+                  <X size={14} />
+                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                      Loyiha nomi
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="e.g. github-readme-generator"
+                      value={project.name}
+                      onChange={(e) => {
+                        const updated = [...data.featuredProjects]
+                        updated[idx] = { ...updated[idx], name: e.target.value }
+                        update('featuredProjects', updated)
+                      }}
+                      className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                      Loyiha tavsifi
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="e.g. Generate premium README templates for GitHub with AI"
+                      value={project.description}
+                      onChange={(e) => {
+                        const updated = [...data.featuredProjects]
+                        updated[idx] = { ...updated[idx], description: e.target.value }
+                        update('featuredProjects', updated)
+                      }}
+                      className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* ── Tech Stack ────────────────────────────────── */}
       <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
         <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
@@ -382,15 +577,28 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               Tech Stack
             </h2>
           </div>
-          {data.skills.length > 0 && (
-            <button
-              onClick={() => update('skills', [])}
-              className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 transition-colors"
-            >
-              <X size={11} />
-              Clear all ({data.skills.length})
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={data.categorizeSkills}
+                onChange={(e) => update('categorizeSkills', e.target.checked)}
+                className="accent-[#7C5CFC] w-3.5 h-3.5"
+              />
+              <span className="text-gray-400 hover:text-gray-300 text-[11px] font-medium transition-colors">
+                Guruhlash
+              </span>
+            </label>
+            {data.skills.length > 0 && (
+              <button
+                onClick={() => update('skills', [])}
+                className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 transition-colors"
+              >
+                <X size={11} />
+                Clear all ({data.skills.length})
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Icon grid — shows actual skillicons.dev images */}
@@ -438,58 +646,119 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           </h2>
         </div>
 
-        <div className="flex flex-col gap-1.5 relative">
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-            Theme
-          </span>
-          
-          {/* Custom Select Trigger */}
-          <button
-            type="button"
-            onClick={() => setThemeOpen(!themeOpen)}
-            className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
-          >
-            <span>{THEMES.find((t) => t.value === data.theme)?.label || data.theme}</span>
-            <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* Theme Dropdown */}
+          <div className="flex flex-col gap-1.5 relative">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Theme
+            </span>
+            
+            {/* Custom Select Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                setThemeOpen(!themeOpen)
+                setLayoutDropdownOpen(false)
+              }}
+              className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+            >
+              <span>{THEMES.find((t) => t.value === data.theme)?.label || data.theme}</span>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-          {/* Custom Select Options Dropdown */}
-          {themeOpen && (
-            <>
-              {/* Backdrop */}
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setThemeOpen(false)}
-              />
-              <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
-                {THEMES.map((t) => {
-                  const isSelected = t.value === data.theme
-                  return (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => {
-                        update('theme', t.value)
-                        setThemeOpen(false)
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
-                        isSelected
-                          ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
-                          : 'text-gray-300 hover:bg-[#7C5CFC]/5 hover:text-white'
-                      }`}
-                    >
-                      <span>{t.label}</span>
-                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
+            {/* Custom Select Options Dropdown */}
+            {themeOpen && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setThemeOpen(false)}
+                />
+                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
+                  {THEMES.map((t) => {
+                    const isSelected = t.value === data.theme
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => {
+                          update('theme', t.value)
+                          setThemeOpen(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
+                            : 'text-gray-300 hover:bg-[#7C5CFC]/5 hover:text-white'
+                        }`}
+                      >
+                        <span>{t.label}</span>
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Layout Dropdown */}
+          <div className="flex flex-col gap-1.5 relative">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Shablon (Layout)
+            </span>
+            
+            {/* Custom Select Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                setLayoutDropdownOpen(!layoutDropdownOpen)
+                setThemeOpen(false)
+              }}
+              className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+            >
+              <span>{LAYOUT_TEMPLATES.find((t) => t.value === data.layoutTemplate)?.label || 'Classic (Markazlashtirilgan)'}</span>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${layoutDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Custom Select Options Dropdown */}
+            {layoutDropdownOpen && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setLayoutDropdownOpen(false)}
+                />
+                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
+                  {LAYOUT_TEMPLATES.map((t) => {
+                    const isSelected = t.value === data.layoutTemplate
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => {
+                          update('layoutTemplate', t.value)
+                          setLayoutDropdownOpen(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
+                            : 'text-gray-300 hover:bg-[#7C5CFC]/5 hover:text-white'
+                        }`}
+                      >
+                        <span>{t.label}</span>
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           {[
+            { key: 'showBanner' as const, label: '⚡ Header Banner' },
             { key: 'showStats' as const, label: '📊 GitHub Stats' },
             { key: 'showStreak' as const, label: '🔥 Streak Stats' },
             { key: 'showTopLangs' as const, label: '📝 Top Languages' },

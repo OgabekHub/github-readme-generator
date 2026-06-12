@@ -13,6 +13,7 @@ export interface GithubUser {
 
 export interface GithubRepo {
   name: string
+  description: string | null
   language: string | null
   topics: string[]
   stargazers_count: number

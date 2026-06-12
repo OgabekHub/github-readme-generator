@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Github, Sparkles } from 'lucide-react'
 import ProfileForm from '@/components/ProfileForm'
 import Preview from '@/components/Preview'
@@ -8,7 +8,15 @@ import { DEFAULT_DATA, generateReadme, ProfileData } from '@/lib/readme-generato
 
 export default function Home() {
   const [data, setData] = useState<ProfileData>(DEFAULT_DATA)
-  const markdown = generateReadme(data)
+  const [hostUrl, setHostUrl] = useState('https://github-readme-generator.vercel.app')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHostUrl(window.location.origin)
+    }
+  }, [])
+
+  const markdown = generateReadme(data, hostUrl)
 
   return (
     <main className="min-h-screen flex flex-col bg-[#07070c] relative overflow-hidden">
