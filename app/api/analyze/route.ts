@@ -6,6 +6,7 @@ import {
   fetchGithubSocials,
   detectSkills,
   RateLimitError,
+  cleanGithubUsername,
 } from '@/lib/github-api'
 
 /** Maps GitHub social provider names → our form field keys */
@@ -54,8 +55,19 @@ function mapSocials(socials: { provider: string; url: string }[]) {
   return result
 }
 
+// ── Helper to extract clean JSON block from a string ──
+function extractJson(text: string): string {
+  const trimmed = text.trim()
+  const startIdx = trimmed.indexOf('{')
+  const endIdx = trimmed.lastIndexOf('}')
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    return trimmed.substring(startIdx, endIdx + 1)
+  }
+  return trimmed
+}
+
 // ── Shared Gemini caller ────────────────────────────────
-async function callGemini(apiKey: string, prompt: string): Promise<string> {
+async function callGemini(apiKey: string, prompt: string, jsonMode: boolean = false): Promise<string> {
   const genAI = new GoogleGenerativeAI(apiKey)
 
   // Models confirmed available — tries in order, uses first that works
@@ -73,7 +85,10 @@ async function callGemini(apiKey: string, prompt: string): Promise<string> {
 
   for (const modelName of modelNames) {
     try {
-      const model = genAI.getGenerativeModel({ model: modelName })
+      const model = genAI.getGenerativeModel({ 
+        model: modelName,
+        generationConfig: jsonMode ? { responseMimeType: 'application/json' } : undefined
+      })
       const result = await model.generateContent(prompt)
       console.log(`[analyze] ✅ Model: ${modelName}`)
       return result.response.text().trim()
@@ -95,7 +110,7 @@ export async function POST(req: NextRequest) {
   let instructions = ''
   try {
     const body = await req.json()
-    username = (body.username ?? '').trim()
+    username = cleanGithubUsername(body.username ?? '')
     tone = (body.tone ?? 'professional').trim()
     instructions = (body.instructions ?? '').trim()
   } catch {
@@ -198,11 +213,8 @@ Return the result ONLY as a raw JSON object with the following structure (do not
   ]
 }`
 
-    const rawResult = await callGemini(apiKey, prompt)
-    const jsonText = rawResult
-      .replace(/^```json\s*/i, '')
-      .replace(/```\s*$/g, '')
-      .trim()
+    const rawResult = await callGemini(apiKey, prompt, true)
+    const jsonText = extractJson(rawResult)
 
     let aiData = { 
       bio: '', 

@@ -240,6 +240,14 @@ export default function ProfileForm({
               placeholder="ogabek"
               value={data.github}
               onChange={(e) => update('github', e.target.value.trim())}
+              onBlur={(e) => {
+                const cleaned = e.target.value.trim()
+                  .replace(/^@/, '')
+                  .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, '')
+                  .split(/[?#]/)[0]
+                  .replace(/\/$/, '')
+                update('github', cleaned)
+              }}
               className="flex-1 min-w-0 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
             />
             <button
