@@ -71,6 +71,7 @@ export const TRANSLATIONS = {
     markdownTab: 'Markdown kodi',
     copyBtn: 'Nusxalash',
     copiedBtn: 'Nusxalandi!',
+    viewProfileBtn: 'GitHub-da profilingizni ochib ko\'ring →',
   },
   en: {
     appTitle: 'GitHub README Generator',
@@ -142,6 +143,7 @@ export const TRANSLATIONS = {
     markdownTab: 'Markdown Code',
     copyBtn: 'Copy',
     copiedBtn: 'Copied!',
+    viewProfileBtn: 'View your profile on GitHub →',
   },
   ru: {
     appTitle: 'Генератор README для GitHub',
@@ -214,5 +216,6 @@ export const TRANSLATIONS = {
     markdownTab: 'Код Markdown',
     copyBtn: 'Копировать',
     copiedBtn: 'Скопировано!',
+    viewProfileBtn: 'Посмотреть профиль на GitHub →',
   }
 }

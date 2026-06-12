@@ -1015,7 +1015,7 @@ export default function ProfileForm({
                     rel="noopener noreferrer"
                     className="underline text-green-300 hover:text-green-200 mt-1 block font-medium"
                   >
-                    GitHub-da profilingizni ochib ko'ring →
+                    {t.viewProfileBtn}
                   </a>
                 </div>
               )}
