@@ -887,7 +887,11 @@ export default function ProfileForm({
               }}
               className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
             >
-              <span>{LAYOUT_TEMPLATES.find((t) => t.value === data.layoutTemplate)?.label || 'Classic (Markazlashtirilgan)'}</span>
+              <span>
+                {data.layoutTemplate === 'classic' ? t.layoutClassic :
+                 data.layoutTemplate === 'minimalist' ? t.layoutMinimalist :
+                 data.layoutTemplate === 'cyberpunk' ? t.layoutCyberpunk : t.layoutClassic}
+              </span>
               <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${layoutDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -900,14 +904,17 @@ export default function ProfileForm({
                   onClick={() => setLayoutDropdownOpen(false)}
                 />
                 <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
-                  {LAYOUT_TEMPLATES.map((t) => {
-                    const isSelected = t.value === data.layoutTemplate
+                  {LAYOUT_TEMPLATES.map((tmpl) => {
+                    const isSelected = tmpl.value === data.layoutTemplate
+                    const label = tmpl.value === 'classic' ? t.layoutClassic :
+                                  tmpl.value === 'minimalist' ? t.layoutMinimalist :
+                                  tmpl.value === 'cyberpunk' ? t.layoutCyberpunk : tmpl.label
                     return (
                       <button
-                        key={t.value}
+                        key={tmpl.value}
                         type="button"
                         onClick={() => {
-                          update('layoutTemplate', t.value)
+                          update('layoutTemplate', tmpl.value)
                           setLayoutDropdownOpen(false)
                         }}
                         className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
@@ -916,7 +923,7 @@ export default function ProfileForm({
                             : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
                         }`}
                       >
-                        <span>{t.label}</span>
+                        <span>{label}</span>
                         {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
                       </button>
                     )
@@ -980,7 +987,7 @@ export default function ProfileForm({
         {!session.loggedIn ? (
           <div className="flex flex-col items-center gap-3 py-4 text-center">
             <p className="text-xs text-[var(--text-muted)] leading-normal max-w-sm">
-              Bu profilingizda maxsus repozitoriya (`username/username`) ochish va uning README.md faylini 1-klikda yangilash uchun kerak bo'ladi.
+              {t.connectGithubSub}
             </p>
             <a
               href="/api/auth/login"
