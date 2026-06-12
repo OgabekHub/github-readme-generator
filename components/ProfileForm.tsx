@@ -87,6 +87,14 @@ export default function ProfileForm({
     update('skills', skills)
   }
 
+  const cardBio = suggestion
+    ? ((lang === 'en' ? suggestion.bioEn : lang === 'ru' ? suggestion.bioRu : suggestion.bio) || suggestion.bio)
+    : ''
+
+  const cardProjects = suggestion
+    ? ((lang === 'en' ? suggestion.projectsEn : lang === 'ru' ? suggestion.projectsRu : suggestion.projects) || suggestion.projects)
+    : []
+
   /* ── AI Analyze ────────────────────────────────────── */
   const handleAnalyze = async () => {
     if (!data.github.trim()) return
@@ -116,9 +124,19 @@ export default function ProfileForm({
   /* ── Apply AI suggestion ───────────────────── */
   const applySuggestion = () => {
     if (!suggestion) return
+
+    const useMultilingual = data.multilingualReadme
+    const mainBio = useMultilingual
+      ? (suggestion.bio || data.bio)
+      : (cardBio || data.bio)
+
+    const mainProjects = useMultilingual
+      ? (suggestion.projects && suggestion.projects.length > 0 ? suggestion.projects : data.featuredProjects)
+      : (cardProjects && cardProjects.length > 0 ? cardProjects : data.featuredProjects)
+
     onChange({
       ...data,
-      bio:              suggestion.bio       || data.bio,
+      bio:              mainBio,
       bioEn:            suggestion.bioEn     || data.bioEn,
       bioRu:            suggestion.bioRu     || data.bioRu,
       name:             suggestion.name      || data.name,
@@ -131,7 +149,7 @@ export default function ProfileForm({
       telegram:         suggestion.telegram  || data.telegram,
       facebook:         suggestion.facebook  || data.facebook,
       skills:           suggestion.skills.length > 0 ? suggestion.skills : data.skills,
-      featuredProjects: suggestion.projects && suggestion.projects.length > 0 ? suggestion.projects : data.featuredProjects,
+      featuredProjects: mainProjects,
       projectsEn:       suggestion.projectsEn && suggestion.projectsEn.length > 0 ? suggestion.projectsEn : data.projectsEn,
       projectsRu:       suggestion.projectsRu && suggestion.projectsRu.length > 0 ? suggestion.projectsRu : data.projectsRu,
     })
@@ -382,13 +400,13 @@ export default function ProfileForm({
             </div>
 
             {/* Bio */}
-            {suggestion.bio && (
+            {cardBio && (
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.suggestedBio}
                 </span>
                 <p className="text-sm text-[var(--text-light)] leading-relaxed italic border-l-2 border-[#7C5CFC]/40 pl-3">
-                  {suggestion.bio}
+                  {cardBio}
                 </p>
               </div>
             )}
@@ -472,13 +490,13 @@ export default function ProfileForm({
             )}
 
             {/* Suggested projects */}
-            {suggestion.projects && suggestion.projects.length > 0 && (
+            {cardProjects && cardProjects.length > 0 && (
               <div className="flex flex-col gap-1.5 border-t border-[var(--border-input)]/40 pt-2.5">
                 <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.suggestedProjects}
                 </span>
                 <div className="flex flex-col gap-1.5">
-                  {suggestion.projects.map((p, idx) => (
+                  {cardProjects.map((p, idx) => (
                     <div key={idx} className="bg-[var(--bg-input)]/50 border border-[var(--border-input)]/70 p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
                       <span className="font-semibold text-[var(--text-main)] flex items-center gap-1">
                         🚀 {p.name}
