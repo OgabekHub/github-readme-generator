@@ -15,7 +15,12 @@ export interface ProfileData {
   skills: string[]
   categorizeSkills: boolean
   layoutTemplate: string
+  multilingualReadme: boolean
+  bioEn: string
+  bioRu: string
   featuredProjects: { name: string; description: string }[]
+  projectsEn: { name: string; description: string }[]
+  projectsRu: { name: string; description: string }[]
   showBanner: boolean
   showStats: boolean
   showStreak: boolean
@@ -92,7 +97,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push(`> ${data.title}`)
       lines.push('')
     }
-    if (data.bio) {
+    if (data.bio && !data.multilingualReadme) {
       lines.push(data.bio)
       lines.push('')
     }
@@ -118,7 +123,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push(`> **STATUS:** ${(data.title || 'ACTIVE_SYSTEM_OPERATOR').toUpperCase()}`)
       lines.push('')
     }
-    if (data.bio) {
+    if (data.bio && !data.multilingualReadme) {
       lines.push('```')
       lines.push(`[SYSTEM_INFO]: ${data.bio}`)
       lines.push('```')
@@ -150,7 +155,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
     }
     lines.push('')
 
-    if (data.bio) {
+    if (data.bio && !data.multilingualReadme) {
       lines.push(`<p align="center">${data.bio}</p>`)
       lines.push('')
     }
@@ -186,8 +191,79 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
     lines.push('')
   }
 
+  // Multilingual README Tabs
+  if (data.multilingualReadme) {
+    // ─── Uzbek Tab ───
+    lines.push('<details open>')
+    lines.push('  <summary>🇺🇿 O\'zbekcha</summary>')
+    lines.push('  <br/>')
+    if (data.bio) {
+      lines.push(`  <p align="center">${data.bio}</p>`)
+      lines.push('')
+    }
+    if (data.featuredProjects && data.featuredProjects.length > 0) {
+      lines.push('  ### 🚀 Loyihalar')
+      lines.push('')
+      for (const proj of data.featuredProjects) {
+        if (proj.name.trim()) {
+          const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
+          lines.push(`  - **[${proj.name}](${url})** — ${proj.description || 'loyiha tavsifi'}`)
+        }
+      }
+      lines.push('')
+    }
+    lines.push('</details>')
+    lines.push('')
+
+    // ─── English Tab ───
+    lines.push('<details>')
+    lines.push('  <summary>🇬🇧 English</summary>')
+    lines.push('  <br/>')
+    if (data.bioEn || data.bio) {
+      lines.push(`  <p align="center">${data.bioEn || data.bio}</p>`)
+      lines.push('')
+    }
+    const enProjects = data.projectsEn && data.projectsEn.length > 0 ? data.projectsEn : data.featuredProjects
+    if (enProjects && enProjects.length > 0) {
+      lines.push('  ### 🚀 Featured Projects')
+      lines.push('')
+      for (const proj of enProjects) {
+        if (proj.name.trim()) {
+          const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
+          lines.push(`  - **[${proj.name}](${url})** — ${proj.description || 'project description'}`)
+        }
+      }
+      lines.push('')
+    }
+    lines.push('</details>')
+    lines.push('')
+
+    // ─── Russian Tab ───
+    lines.push('<details>')
+    lines.push('  <summary>🇷🇺 Русский</summary>')
+    lines.push('  <br/>')
+    if (data.bioRu || data.bio) {
+      lines.push(`  <p align="center">${data.bioRu || data.bio}</p>`)
+      lines.push('')
+    }
+    const ruProjects = data.projectsRu && data.projectsRu.length > 0 ? data.projectsRu : data.featuredProjects
+    if (ruProjects && ruProjects.length > 0) {
+      lines.push('  ### 🚀 Избранные проекты')
+      lines.push('')
+      for (const proj of ruProjects) {
+        if (proj.name.trim()) {
+          const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
+          lines.push(`  - **[${proj.name}](${url})** — ${proj.description || 'описание проекта'}`)
+        }
+      }
+      lines.push('')
+    }
+    lines.push('</details>')
+    lines.push('')
+  }
+
   // Featured Projects
-  if (data.featuredProjects && data.featuredProjects.length > 0) {
+  if (!data.multilingualReadme && data.featuredProjects && data.featuredProjects.length > 0) {
     if (template === 'cyberpunk') {
       lines.push('### ⚡ ACTIVE_MISSIONS')
     } else if (template === 'minimalist') {
@@ -403,7 +479,12 @@ export const DEFAULT_DATA: ProfileData = {
   skills: [],
   categorizeSkills: false,
   layoutTemplate: 'classic',
+  multilingualReadme: false,
+  bioEn: '',
+  bioRu: '',
   featuredProjects: [],
+  projectsEn: [],
+  projectsRu: [],
   showBanner: false,
   showStats: true,
   showStreak: true,

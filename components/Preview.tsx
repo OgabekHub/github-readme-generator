@@ -3,12 +3,15 @@
 import { useState } from 'react'
 import { Copy, Check, Download, Eye, Code2 } from 'lucide-react'
 import { markdownToHtml } from '@/lib/markdown'
+import { TRANSLATIONS } from '@/lib/i18n'
 
 interface PreviewProps {
   markdown: string
+  lang?: 'uz' | 'en' | 'ru'
 }
 
-export default function Preview({ markdown }: PreviewProps) {
+export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
+  const t = TRANSLATIONS[lang]
   const [tab, setTab] = useState<'preview' | 'code'>('preview')
   const [copied, setCopied] = useState(false)
 
@@ -41,7 +44,7 @@ export default function Preview({ markdown }: PreviewProps) {
                 : 'text-gray-400 hover:text-gray-200'
             }`}
           >
-            <Eye size={12} /> Preview
+            <Eye size={12} /> {t.previewTab}
           </button>
           <button
             onClick={() => setTab('code')}
@@ -51,7 +54,7 @@ export default function Preview({ markdown }: PreviewProps) {
                 : 'text-gray-400 hover:text-gray-200'
             }`}
           >
-            <Code2 size={12} /> Markdown
+            <Code2 size={12} /> {t.markdownTab}
           </button>
         </div>
 
@@ -65,7 +68,7 @@ export default function Preview({ markdown }: PreviewProps) {
             ) : (
               <Copy size={12} />
             )}
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? t.copiedBtn : t.copyBtn}
           </button>
           <button
             onClick={handleDownload}

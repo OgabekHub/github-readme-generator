@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       promptInstructions += `\nAdditional custom instruction from the user: "${instructions}". Incorporate this detail naturally into the bio.`
     }
 
-    const prompt = `You are helping a software developer write a concise GitHub profile README.
+    const prompt = `You are helping a software developer write a concise, professional GitHub profile README.
 
 Based on the following information about them:
 - GitHub username: ${user.login}
@@ -157,21 +157,39 @@ Based on the following information about them:
 - Top repositories to showcase:
 ${featuredRepos.map((r) => `- Name: ${r.name}\n  Current Description: ${r.description || 'none'}`).join('\n')}
 
-We need two things:
-1. A developer-focused bio matching these style instructions:
+We need these details written in three languages: Uzbek, English, and Russian.
+
+For the bio, match these style instructions:
 ${promptInstructions}
 Core bio rules:
 - Uses NO first person (no "I", "my", "me", "we", "our"). All sentences must be in the third-person or passive form.
 
-2. A list of their top 3 featured projects, each with a brief, attractive, developer-focused 1-sentence description. Use the current descriptions as context but rewrite them to sound catchy, punchy, and professional.
+For the 3 featured projects:
+- Uzbek: rewrite descriptions to sound catchy, punchy, and professional in Uzbek.
+- English: rewrite descriptions to sound catchy, punchy, and professional in English.
+- Russian: rewrite descriptions to sound catchy, punchy, and professional in Russian.
 
 Return the result ONLY as a raw JSON object with the following structure (do not include markdown code block formatting or backticks, just raw JSON text):
 {
-  "bio": "the generated bio string",
+  "bio": "the generated bio string in Uzbek",
+  "bioEn": "the generated bio string in English",
+  "bioRu": "the generated bio string in Russian",
   "projects": [
     {
       "name": "project-name",
-      "description": "the rewritten catchy description"
+      "description": "the rewritten catchy description in Uzbek"
+    }
+  ],
+  "projectsEn": [
+    {
+      "name": "project-name",
+      "description": "the rewritten catchy description in English"
+    }
+  ],
+  "projectsRu": [
+    {
+      "name": "project-name",
+      "description": "the rewritten catchy description in Russian"
     }
   ]
 }`
@@ -182,27 +200,45 @@ Return the result ONLY as a raw JSON object with the following structure (do not
       .replace(/```\s*$/g, '')
       .trim()
 
-    let aiData = { bio: '', projects: [] as { name: string; description: string }[] }
+    let aiData = { 
+      bio: '', 
+      bioEn: '', 
+      bioRu: '', 
+      projects: [] as { name: string; description: string }[],
+      projectsEn: [] as { name: string; description: string }[],
+      projectsRu: [] as { name: string; description: string }[]
+    }
     try {
       aiData = JSON.parse(jsonText)
     } catch (e) {
       console.error('[analyze] Failed to parse AI JSON:', jsonText, e)
-      aiData = { bio: rawResult, projects: [] }
+      aiData = { 
+        bio: rawResult, 
+        bioEn: '', 
+        bioRu: '', 
+        projects: [],
+        projectsEn: [],
+        projectsRu: []
+      }
     }
 
     return NextResponse.json({
-      bio:       aiData.bio || '',
-      projects:  aiData.projects || [],
+      bio:        aiData.bio || '',
+      bioEn:      aiData.bioEn || '',
+      bioRu:      aiData.bioRu || '',
+      projects:   aiData.projects || [],
+      projectsEn: aiData.projectsEn || [],
+      projectsRu: aiData.projectsRu || [],
       skills,
-      name:      user.name ?? '',
-      location:  user.location ?? '',
-      website:   user.blog ?? '',
-      twitter:   socialLinks.twitter   ?? user.twitter_username ?? '',
-      linkedin:  socialLinks.linkedin  ?? '',
-      instagram: socialLinks.instagram ?? '',
-      youtube:   socialLinks.youtube   ?? '',
-      telegram:  socialLinks.telegram  ?? '',
-      facebook:  socialLinks.facebook  ?? '',
+      name:       user.name ?? '',
+      location:   user.location ?? '',
+      website:    user.blog ?? '',
+      twitter:    socialLinks.twitter   ?? user.twitter_username ?? '',
+      linkedin:   socialLinks.linkedin  ?? '',
+      instagram:  socialLinks.instagram ?? '',
+      youtube:    socialLinks.youtube   ?? '',
+      telegram:   socialLinks.telegram  ?? '',
+      facebook:   socialLinks.facebook  ?? '',
     })
 
 

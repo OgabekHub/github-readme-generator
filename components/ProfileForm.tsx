@@ -3,14 +3,23 @@
 import { useState } from 'react'
 import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES } from '@/lib/readme-generator'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
+import { TRANSLATIONS } from '@/lib/i18n'
 
 interface FormProps {
   data: ProfileData
   onChange: (data: ProfileData) => void
+  lang: 'uz' | 'en' | 'ru'
+  session: { loggedIn: boolean; username?: string; name?: string; avatarUrl?: string }
+  onLogout: () => Promise<void>
+  onCommit: () => Promise<void>
+  committing: boolean
+  commitResult: { success: boolean; url?: string; error?: string } | null
 }
 
 interface AISuggestion {
   bio: string
+  bioEn?: string
+  bioRu?: string
   skills: string[]
   name: string
   location: string
@@ -22,6 +31,8 @@ interface AISuggestion {
   telegram: string
   facebook: string
   projects?: { name: string; description: string }[]
+  projectsEn?: { name: string; description: string }[]
+  projectsRu?: { name: string; description: string }[]
 }
 
 /* ── Reusable text input ──────────────────────────────── */
@@ -42,7 +53,17 @@ function Field({
   )
 }
 
-export default function ProfileForm({ data, onChange }: FormProps) {
+export default function ProfileForm({ 
+  data, 
+  onChange,
+  lang,
+  session,
+  onLogout,
+  onCommit,
+  committing,
+  commitResult
+}: FormProps) {
+  const t = TRANSLATIONS[lang]
   const [analyzing, setAnalyzing] = useState(false)
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
@@ -55,7 +76,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
   const [aiInstructions, setAiInstructions] = useState('')
   const [toneDropdownOpen, setToneDropdownOpen] = useState(false)
 
-  const update = <K extends keyof ProfileData>(key: K, value: ProfileData[K]) => {
+  function update<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
     onChange({ ...data, [key]: value })
   }
 
@@ -98,6 +119,8 @@ export default function ProfileForm({ data, onChange }: FormProps) {
     onChange({
       ...data,
       bio:              suggestion.bio       || data.bio,
+      bioEn:            suggestion.bioEn     || data.bioEn,
+      bioRu:            suggestion.bioRu     || data.bioRu,
       name:             suggestion.name      || data.name,
       location:         suggestion.location  || data.location,
       website:          suggestion.website   || data.website,
@@ -109,6 +132,8 @@ export default function ProfileForm({ data, onChange }: FormProps) {
       facebook:         suggestion.facebook  || data.facebook,
       skills:           suggestion.skills.length > 0 ? suggestion.skills : data.skills,
       featuredProjects: suggestion.projects && suggestion.projects.length > 0 ? suggestion.projects : data.featuredProjects,
+      projectsEn:       suggestion.projectsEn && suggestion.projectsEn.length > 0 ? suggestion.projectsEn : data.projectsEn,
+      projectsRu:       suggestion.projectsRu && suggestion.projectsRu.length > 0 ? suggestion.projectsRu : data.projectsRu,
     })
     setSuggestion(null)
   }
@@ -121,18 +146,18 @@ export default function ProfileForm({ data, onChange }: FormProps) {
         <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
           <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
-            Basic Info
+            {t.basicInfo}
           </h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
-            label="Name"
+            label={t.name}
             placeholder="Og'abek"
             value={data.name}
             onChange={(e) => update('name', e.target.value)}
           />
           <Field
-            label="Title / Role"
+            label={t.title}
             placeholder="Full-Stack Developer"
             value={data.title}
             onChange={(e) => update('title', e.target.value)}
@@ -140,26 +165,56 @@ export default function ProfileForm({ data, onChange }: FormProps) {
         </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-            Bio
+            {data.multilingualReadme ? 'Bio (Uzbek)' : t.bio}
           </span>
           <textarea
-            placeholder="Building AI-powered tools for the Uzbek market 🇺🇿"
+            placeholder={t.bioPlaceholder}
             value={data.bio}
             onChange={(e) => update('bio', e.target.value)}
             rows={2}
             className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
           />
         </label>
+
+        {data.multilingualReadme && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1 border-t border-[#232333]/40 pt-3.5 slide-down">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Bio (English)
+              </span>
+              <textarea
+                placeholder="Write your bio in English..."
+                value={data.bioEn}
+                onChange={(e) => update('bioEn', e.target.value)}
+                rows={2}
+                className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Bio (Русский)
+              </span>
+              <textarea
+                placeholder="Напишите описание на русском..."
+                value={data.bioRu}
+                onChange={(e) => update('bioRu', e.target.value)}
+                rows={2}
+                className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+              />
+            </label>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
-            label="Location"
-            placeholder="Bukhara, Uzbekistan"
+            label={t.location}
+            placeholder={t.locationPlaceholder}
             value={data.location}
             onChange={(e) => update('location', e.target.value)}
           />
           <Field
-            label="Fun Fact"
-            placeholder="I debug with print statements 😄"
+            label={t.funFact}
+            placeholder={t.funFactPlaceholder}
             value={data.funFact}
             onChange={(e) => update('funFact', e.target.value)}
           />
@@ -171,14 +226,14 @@ export default function ProfileForm({ data, onChange }: FormProps) {
         <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
           <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
-            Links & AI Analysis
+            {t.linksAndAi}
           </h2>
         </div>
 
         {/* GitHub + AI button row */}
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-            GitHub Username
+            {t.githubUsername}
           </span>
           <div className="flex gap-2">
             <input
@@ -188,6 +243,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               className="flex-1 min-w-0 bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
             />
             <button
+              type="button"
               onClick={handleAnalyze}
               disabled={!data.github.trim() || analyzing}
               title="Analyze GitHub profile with AI"
@@ -199,7 +255,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 <Sparkles size={14} />
               )}
               <span className="hidden xs:inline">
-                {analyzing ? 'Tahlil...' : 'AI Tahlil'}
+                {analyzing ? t.analyzing : t.aiAnalyze}
               </span>
             </button>
           </div>
@@ -212,7 +268,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
             onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
           >
-            <span>⚙️ AI Sozlamalari</span>
+            <span>{t.aiSettings}</span>
             <span className="text-[10px]">{aiSettingsOpen ? '▲' : '▼'}</span>
           </button>
 
@@ -221,7 +277,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               {/* Tone Selection */}
               <div className="flex flex-col gap-1.5 relative">
                 <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
-                  Bio Ohangi (Tone)
+                  {t.bioTone}
                 </span>
                 <button
                   type="button"
@@ -229,10 +285,10 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                   className="flex items-center justify-between w-full bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-1.5 text-xs text-gray-100 hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
                 >
                   <span>
-                    {aiTone === 'professional' && '💼 Professional (Jiddiy)'}
-                    {aiTone === 'minimalist' && '🔍 Minimalist (Qisqa)'}
-                    {aiTone === 'creative' && '🎨 Creative / Funny (Kreativ)'}
-                    {aiTone === 'hacker' && '💻 Hacker Style (Kiber-punk)'}
+                    {aiTone === 'professional' && t.toneProfessional}
+                    {aiTone === 'minimalist' && t.toneMinimalist}
+                    {aiTone === 'creative' && t.toneCreative}
+                    {aiTone === 'hacker' && t.toneHacker}
                   </span>
                   <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${toneDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -242,25 +298,25 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                     <div className="fixed inset-0 z-30" onClick={() => setToneDropdownOpen(false)} />
                     <div className="absolute top-[calc(100%+4px)] left-0 w-full z-40 bg-[#13131c] border border-[#2a2a3e] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto backdrop-blur-md">
                       {[
-                        { value: 'professional', label: '💼 Professional (Jiddiy)' },
-                        { value: 'minimalist', label: '🔍 Minimalist (Qisqa)' },
-                        { value: 'creative', label: '🎨 Creative / Funny (Kreativ)' },
-                        { value: 'hacker', label: '💻 Hacker Style (Kiber-punk)' },
-                      ].map((t) => (
+                        { value: 'professional', label: t.toneProfessional },
+                        { value: 'minimalist', label: t.toneMinimalist },
+                        { value: 'creative', label: t.toneCreative },
+                        { value: 'hacker', label: t.toneHacker },
+                      ].map((opt) => (
                         <button
-                          key={t.value}
+                          key={opt.value}
                           type="button"
                           onClick={() => {
-                            setAiTone(t.value as any)
+                            setAiTone(opt.value as any)
                             setToneDropdownOpen(false)
                           }}
                           className={`w-full text-left px-3.5 py-1.5 text-xs transition-all duration-150 ${
-                            aiTone === t.value
+                            aiTone === opt.value
                               ? 'bg-[#7C5CFC]/15 text-[#a78bfa] font-semibold'
                               : 'text-gray-300 hover:bg-[#7C5CFC]/5'
                           }`}
                         >
-                          {t.label}
+                          {opt.label}
                         </button>
                       ))}
                     </div>
@@ -271,10 +327,10 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               {/* Custom Instructions */}
               <div className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
-                  Qo'shimcha ko'rsatmalar
+                  {t.customInstructions}
                 </span>
                 <textarea
-                  placeholder="Masalan: Men choyni yaxshi ko'raman deb yoz, yoki React/Web3 ga ko'proq urg'u ber..."
+                  placeholder={t.instructionsPlaceholder}
                   value={aiInstructions}
                   onChange={(e) => setAiInstructions(e.target.value)}
                   rows={2}
@@ -284,6 +340,17 @@ export default function ProfileForm({ data, onChange }: FormProps) {
             </div>
           )}
         </div>
+
+        {/* Multilingual README Toggle */}
+        <label className="flex items-center gap-2 bg-[#14141e]/50 border border-[#222232] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
+          <input
+            type="checkbox"
+            checked={data.multilingualReadme}
+            onChange={(e) => update('multilingualReadme', e.target.checked)}
+            className="accent-[#7C5CFC] w-4 h-4 shrink-0"
+          />
+          <span className="text-gray-300 text-xs font-semibold">{t.multilingualReadmeToggle}</span>
+        </label>
 
         {/* AI error */}
         {aiError && (
@@ -302,7 +369,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 <Sparkles size={10} className="text-white" />
               </div>
               <span className="text-xs font-bold text-[#a78bfa] uppercase tracking-widest">
-                AI Taklifi
+                {t.aiSuggestionTitle}
               </span>
             </div>
 
@@ -310,7 +377,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
             {suggestion.bio && (
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
-                  Bio
+                  {t.suggestedBio}
                 </span>
                 <p className="text-sm text-gray-200 leading-relaxed italic border-l-2 border-[#7C5CFC]/40 pl-3">
                   {suggestion.bio}
@@ -323,7 +390,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               suggestion.linkedin || suggestion.instagram || suggestion.youtube || suggestion.telegram || suggestion.facebook) && (
               <div className="flex flex-col gap-1.5">
                 <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
-                  Profil ma'lumotlari
+                  {t.profileDetails}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {suggestion.location && (
@@ -374,7 +441,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
             {suggestion.skills.length > 0 && (
               <div className="flex flex-col gap-1.5">
                 <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
-                  Aniqlangan texnologiyalar
+                  {t.detectedSkills}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {suggestion.skills.map((s) => (
@@ -400,7 +467,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
             {suggestion.projects && suggestion.projects.length > 0 && (
               <div className="flex flex-col gap-1.5 border-t border-[#7C5CFC]/20 pt-2.5">
                 <span className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
-                  Tavsiya etilgan top loyihalar
+                  {t.suggestedProjects}
                 </span>
                 <div className="flex flex-col gap-1.5">
                   {suggestion.projects.map((p, idx) => (
@@ -421,13 +488,13 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 onClick={applySuggestion}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#7C5CFC] text-white hover:bg-[#6a4ce0] active:scale-95 transition-all duration-150"
               >
-                <CheckCircle size={12} /> Qabul qilish
+                <CheckCircle size={12} /> {t.accept}
               </button>
               <button
                 onClick={() => setSuggestion(null)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[#2a2a3a] text-gray-400 hover:text-gray-200 hover:border-gray-500 active:scale-95 transition-all duration-150"
               >
-                <XCircle size={12} /> Rad etish
+                <XCircle size={12} /> {t.decline}
               </button>
             </div>
           </div>
@@ -435,49 +502,49 @@ export default function ProfileForm({ data, onChange }: FormProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
-            label="Email"
+            label={t.email}
             placeholder="you@example.com"
             value={data.email}
             onChange={(e) => update('email', e.target.value)}
           />
           <Field
-            label="Telegram"
+            label={t.telegram}
             placeholder="@username"
             value={data.telegram}
             onChange={(e) => update('telegram', e.target.value)}
           />
           <Field
-            label="Twitter / X"
+            label={t.twitter}
             placeholder="@username"
             value={data.twitter}
             onChange={(e) => update('twitter', e.target.value)}
           />
           <Field
-            label="LinkedIn"
+            label={t.linkedin}
             placeholder="username or full URL"
             value={data.linkedin}
             onChange={(e) => update('linkedin', e.target.value)}
           />
           <Field
-            label="Instagram"
+            label={t.instagram}
             placeholder="@username"
             value={data.instagram}
             onChange={(e) => update('instagram', e.target.value)}
           />
           <Field
-            label="YouTube"
+            label={t.youtube}
             placeholder="channel URL or username"
             value={data.youtube}
             onChange={(e) => update('youtube', e.target.value)}
           />
           <Field
-            label="Facebook"
+            label={t.facebook}
             placeholder="username or full URL"
             value={data.facebook}
             onChange={(e) => update('facebook', e.target.value)}
           />
           <Field
-            label="Website"
+            label={t.website}
             placeholder="yoursite.com"
             value={data.website}
             onChange={(e) => update('website', e.target.value)}
@@ -491,79 +558,152 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
             <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
-              Featured Projects
+              {t.featuredProjects}
             </h2>
           </div>
           {data.featuredProjects.length < 5 && (
             <button
               onClick={() => {
                 const updated = [...data.featuredProjects, { name: '', description: '' }]
-                update('featuredProjects', updated)
+                const updatedEn = [...(data.projectsEn || []), { name: '', description: '' }]
+                const updatedRu = [...(data.projectsRu || []), { name: '', description: '' }]
+                onChange({
+                  ...data,
+                  featuredProjects: updated,
+                  projectsEn: updatedEn,
+                  projectsRu: updatedRu,
+                })
               }}
               className="text-xs font-semibold text-[#a78bfa] hover:text-[#c084fc] transition-colors"
             >
-              + Yangi loyiha
+              {t.addProject}
             </button>
           )}
         </div>
 
         {data.featuredProjects.length === 0 ? (
           <p className="text-xs text-gray-500 italic">
-            Hozircha loyihalar yo'q. Loyiha nomi va tavsifini qo'shish uchun yuqoridagi tugmani bosing yoki AI Tahlil orqali generatsiya qiling.
+            {t.noProjects}
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {data.featuredProjects.map((project, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col gap-2 p-3 bg-[#14141e]/50 border border-[#222232] rounded-xl relative group"
-              >
-                <button
-                  onClick={() => {
-                    const updated = data.featuredProjects.filter((_, i) => i !== idx)
-                    update('featuredProjects', updated)
-                  }}
-                  className="absolute top-2.5 right-2.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
-                  title="Remove project"
+            {data.featuredProjects.map((project, idx) => {
+              const projEn = data.projectsEn?.[idx] || { name: project.name, description: '' }
+              const projRu = data.projectsRu?.[idx] || { name: project.name, description: '' }
+              
+              return (
+                <div
+                  key={idx}
+                  className="flex flex-col gap-2.5 p-4 bg-[#14141e]/50 border border-[#222232] rounded-xl relative group"
                 >
-                  <X size={14} />
-                </button>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                      Loyiha nomi
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="e.g. github-readme-generator"
-                      value={project.name}
-                      onChange={(e) => {
-                        const updated = [...data.featuredProjects]
-                        updated[idx] = { ...updated[idx], name: e.target.value }
-                        update('featuredProjects', updated)
-                      }}
-                      className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                      Loyiha tavsifi
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="e.g. Generate premium README templates for GitHub with AI"
-                      value={project.description}
-                      onChange={(e) => {
-                        const updated = [...data.featuredProjects]
-                        updated[idx] = { ...updated[idx], description: e.target.value }
-                        update('featuredProjects', updated)
-                      }}
-                      className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
-                    />
+                  <button
+                    onClick={() => {
+                      const updated = data.featuredProjects.filter((_, i) => i !== idx)
+                      const updatedEn = (data.projectsEn || []).filter((_, i) => i !== idx)
+                      const updatedRu = (data.projectsRu || []).filter((_, i) => i !== idx)
+                      onChange({
+                        ...data,
+                        featuredProjects: updated,
+                        projectsEn: updatedEn,
+                        projectsRu: updatedRu,
+                      })
+                    }}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
+                    title="Remove project"
+                  >
+                    <X size={14} />
+                  </button>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Project Name */}
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                        {t.projectName}
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="e.g. github-readme-generator"
+                        value={project.name}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          const updated = [...data.featuredProjects]
+                          const updatedEn = [...(data.projectsEn || [])]
+                          const updatedRu = [...(data.projectsRu || [])]
+                          
+                          updated[idx] = { ...updated[idx], name: val }
+                          updatedEn[idx] = { ...projEn, name: val }
+                          updatedRu[idx] = { ...projRu, name: val }
+                          
+                          onChange({
+                            ...data,
+                            featuredProjects: updated,
+                            projectsEn: updatedEn,
+                            projectsRu: updatedRu,
+                          })
+                        }}
+                        className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                      />
+                    </div>
+
+                    {/* Descriptions */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                        {data.multilingualReadme ? 'Description (Uzbek)' : t.projectDesc}
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Loyiha tavsifi..."
+                        value={project.description}
+                        onChange={(e) => {
+                          const updated = [...data.featuredProjects]
+                          updated[idx] = { ...updated[idx], description: e.target.value }
+                          update('featuredProjects', updated)
+                        }}
+                        className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                      />
+                    </div>
+
+                    {data.multilingualReadme ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                          Description (English)
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Project description in English..."
+                          value={projEn.description}
+                          onChange={(e) => {
+                            const updatedEn = [...(data.projectsEn || [])]
+                            updatedEn[idx] = { ...projEn, description: e.target.value }
+                            update('projectsEn', updatedEn)
+                          }}
+                          className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                        />
+                      </div>
+                    ) : null}
+
+                    {data.multilingualReadme ? (
+                      <div className="flex flex-col gap-1 sm:col-span-2">
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                          Description (Русский)
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Описание проекта на русском..."
+                          value={projRu.description}
+                          onChange={(e) => {
+                            const updatedRu = [...(data.projectsRu || [])]
+                            updatedRu[idx] = { ...projRu, description: e.target.value }
+                            update('projectsRu', updatedRu)
+                          }}
+                          className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-2.5 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                        />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
@@ -574,7 +714,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
             <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
-              Tech Stack
+              {t.techStack}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -586,7 +726,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 className="accent-[#7C5CFC] w-3.5 h-3.5"
               />
               <span className="text-gray-400 hover:text-gray-300 text-[11px] font-medium transition-colors">
-                Guruhlash
+                {t.categorize}
               </span>
             </label>
             {data.skills.length > 0 && (
@@ -595,7 +735,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 transition-colors"
               >
                 <X size={11} />
-                Clear all ({data.skills.length})
+                {t.clearAll} ({data.skills.length})
               </button>
             )}
           </div>
@@ -642,7 +782,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
         <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
           <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
           <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
-            Widgets & Theme
+            {t.widgetsAndTheme}
           </h2>
         </div>
 
@@ -650,7 +790,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           {/* Theme Dropdown */}
           <div className="flex flex-col gap-1.5 relative">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-              Theme
+              {t.theme}
             </span>
             
             {/* Custom Select Trigger */}
@@ -704,7 +844,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           {/* Layout Dropdown */}
           <div className="flex flex-col gap-1.5 relative">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-              Shablon (Layout)
+              {t.layout}
             </span>
             
             {/* Custom Select Trigger */}
@@ -758,12 +898,12 @@ export default function ProfileForm({ data, onChange }: FormProps) {
 
         <div className="grid grid-cols-2 gap-2">
           {[
-            { key: 'showBanner' as const, label: '⚡ Header Banner' },
-            { key: 'showStats' as const, label: '📊 GitHub Stats' },
-            { key: 'showStreak' as const, label: '🔥 Streak Stats' },
-            { key: 'showTopLangs' as const, label: '📝 Top Languages' },
-            { key: 'showTrophies' as const, label: '🏆 Trophies' },
-            { key: 'showVisitorBadge' as const, label: '👁️ Visitor Counter' },
+            { key: 'showBanner' as const, label: t.widgetBanner },
+            { key: 'showStats' as const, label: t.widgetStats },
+            { key: 'showStreak' as const, label: t.widgetStreak },
+            { key: 'showTopLangs' as const, label: t.widgetLangs },
+            { key: 'showTrophies' as const, label: t.widgetTrophies },
+            { key: 'showVisitorBadge' as const, label: t.widgetViews },
           ].map((item) => (
             <label
               key={item.key}
@@ -782,8 +922,108 @@ export default function ProfileForm({ data, onChange }: FormProps) {
 
         {!data.github && (data.showStats || data.showTrophies) && (
           <p className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
-            ⚠️ GitHub username kiriting — widgetlar to'g'ri ishlash uchun kerak.
+            {t.githubRequiredWarning}
           </p>
+        )}
+      </section>
+
+      {/* ── GitHub Publish / Deploy ─────────────────────── */}
+      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm border-t-[#7C5CFC]/20">
+        <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+              🚀 {t.commitToProfile.split(' ')[0]} Publish
+            </h2>
+          </div>
+          {session.loggedIn && (
+            <button
+              onClick={onLogout}
+              className="text-[11px] text-gray-400 hover:text-red-400 transition-colors"
+            >
+              {t.logout}
+            </button>
+          )}
+        </div>
+
+        {!session.loggedIn ? (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <p className="text-xs text-gray-400 leading-normal max-w-sm">
+              Bu profilingizda maxsus repozitoriya (`username/username`) ochish va uning README.md faylini 1-klikda yangilash uchun kerak bo'ladi.
+            </p>
+            <a
+              href="/api/auth/login"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-[#7C5CFC] to-[#a855f7] text-white hover:opacity-95 active:scale-95 transition-all duration-150 shadow-[0_0_15px_#7C5CFC44]"
+            >
+              <span>🔑 {t.connectGithub}</span>
+            </a>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {/* User header */}
+            <div className="flex items-center gap-3 bg-[#14141e]/50 border border-[#222232] p-3 rounded-xl">
+              <img
+                src={session.avatarUrl}
+                alt={session.username}
+                width={36}
+                height={36}
+                className="rounded-full border border-[#7C5CFC]/30"
+              />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-gray-100">{session.name}</span>
+                <span className="text-[10px] text-gray-500">@{session.username}</span>
+              </div>
+              <span className="ml-auto text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-medium">
+                Connected
+              </span>
+            </div>
+
+            {/* Commit controls */}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={onCommit}
+                disabled={committing}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#7C5CFC] text-white hover:bg-[#6a4ce0] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_12px_#7C5CFC33]"
+              >
+                {committing ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>{t.committing}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🚀 {t.commitToProfile}</span>
+                  </>
+                )}
+              </button>
+
+              {/* Success Result */}
+              {commitResult?.success && (
+                <div className="slide-down flex flex-col gap-1 text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-xl px-3.5 py-3 mt-1 leading-normal">
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    <CheckCircle size={14} className="shrink-0" />
+                    <span>{t.commitSuccess}</span>
+                  </div>
+                  <a
+                    href={commitResult.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-green-300 hover:text-green-200 mt-1 block font-medium"
+                  >
+                    GitHub-da profilingizni ochib ko'ring →
+                  </a>
+                </div>
+              )}
+
+              {/* Error Result */}
+              {commitResult && !commitResult.success && (
+                <div className="slide-down flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-3 mt-1 leading-normal">
+                  <XCircle size={14} className="shrink-0" />
+                  <span>{t.commitError}: {commitResult.error}</span>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </section>
     </div>
