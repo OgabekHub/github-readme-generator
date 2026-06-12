@@ -31,47 +31,47 @@ export default function Preview({ markdown }: PreviewProps) {
   return (
     <div className="flex flex-col h-full">
       {/* ── Tabs + actions ────────────────────────────── */}
-      <div className="flex items-center justify-between border-b border-[#2a2a3a] px-4 py-2 shrink-0">
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between border-b border-[#222232] px-5 py-3 shrink-0 bg-[#0a0a0f]/40 backdrop-blur-sm">
+        <div className="flex gap-1 bg-[#14141e]/80 border border-[#222232] p-1 rounded-xl">
           <button
             onClick={() => setTab('preview')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
               tab === 'preview'
-                ? 'bg-[#7C5CFC] text-white shadow-[0_0_10px_#7C5CFC55]'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? 'bg-[#7C5CFC] text-white shadow-[0_2px_8px_rgba(124,92,252,0.4)]'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
-            <Eye size={13} /> Preview
+            <Eye size={12} /> Preview
           </button>
           <button
             onClick={() => setTab('code')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
               tab === 'code'
-                ? 'bg-[#7C5CFC] text-white shadow-[0_0_10px_#7C5CFC55]'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? 'bg-[#7C5CFC] text-white shadow-[0_2px_8px_rgba(124,92,252,0.4)]'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
-            <Code2 size={13} /> Markdown
+            <Code2 size={12} /> Markdown
           </button>
         </div>
 
         <div className="flex gap-2">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-[#2a2a3a] text-gray-300 hover:border-[#7C5CFC] hover:text-white transition-all duration-150"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-[#222232] text-gray-300 hover:border-[#7C5CFC] hover:text-white active:scale-95 transition-all duration-150 bg-[#14141e]/30"
           >
             {copied ? (
-              <Check size={13} className="text-green-400" />
+              <Check size={12} className="text-green-400" />
             ) : (
-              <Copy size={13} />
+              <Copy size={12} />
             )}
             {copied ? 'Copied!' : 'Copy'}
           </button>
           <button
             onClick={handleDownload}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-[#7C5CFC] text-white hover:bg-[#6a4ce0] transition-all duration-150 shadow-[0_0_10px_#7C5CFC44]"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-[#7C5CFC] to-[#a855f7] text-white hover:opacity-90 active:scale-95 transition-all duration-150 shadow-[0_0_12px_rgba(124,92,252,0.3)]"
           >
-            <Download size={13} /> Download
+            <Download size={12} /> Download
           </button>
         </div>
       </div>

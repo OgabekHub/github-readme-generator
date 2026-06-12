@@ -11,7 +11,10 @@ export default function Home() {
   const markdown = generateReadme(data)
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col bg-[#07070c] relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#7C5CFC]/8 to-transparent blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-[#a855f7]/8 to-transparent blur-[120px] pointer-events-none -z-10" />
       {/* ── Header ─────────────────────────────────────── */}
       <header className="sticky top-0 z-20 border-b border-[#2a2a3a] px-6 py-3.5 flex items-center justify-between bg-[#0a0a0f]/90 backdrop-blur-md">
         <div className="flex items-center gap-3">

@@ -100,13 +100,16 @@ export default function ProfileForm({ data, onChange }: FormProps) {
   }
 
   return (
-    <div className="flex flex-col gap-7">
+    <div className="flex flex-col gap-6">
 
       {/* ── Basic Info ────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-bold text-[#7C5CFC] uppercase tracking-widest">
-          Basic Info
-        </h2>
+      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
+          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+            Basic Info
+          </h2>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
             label="Name"
@@ -130,7 +133,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
             value={data.bio}
             onChange={(e) => update('bio', e.target.value)}
             rows={2}
-            className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150 resize-none"
+            className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
           />
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -150,10 +153,13 @@ export default function ProfileForm({ data, onChange }: FormProps) {
       </section>
 
       {/* ── Social Links ──────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-bold text-[#7C5CFC] uppercase tracking-widest">
-          Links
-        </h2>
+      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
+          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+            Links & AI Analysis
+          </h2>
+        </div>
 
         {/* GitHub + AI button row */}
         <div className="flex flex-col gap-1.5">
@@ -165,13 +171,13 @@ export default function ProfileForm({ data, onChange }: FormProps) {
               placeholder="ogabek"
               value={data.github}
               onChange={(e) => update('github', e.target.value.trim())}
-              className="flex-1 min-w-0 bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
+              className="flex-1 min-w-0 bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
             />
             <button
               onClick={handleAnalyze}
               disabled={!data.github.trim() || analyzing}
               title="Analyze GitHub profile with AI"
-              className="flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#7C5CFC] to-[#a855f7] text-white hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_14px_#7C5CFC44]"
+              className="flex shrink-0 items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#7C5CFC] to-[#a855f7] text-white hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_14px_#7C5CFC44] hover:shadow-[0_0_20px_#7C5CFC66]"
             >
               {analyzing ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -195,7 +201,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
 
         {/* AI suggestion card */}
         {suggestion && (
-          <div className="slide-down border border-[#7C5CFC]/40 bg-[#7C5CFC]/5 rounded-xl p-4 flex flex-col gap-3">
+          <div className="slide-down border border-[#7C5CFC]/30 bg-[#7C5CFC]/5 backdrop-blur-md shadow-[0_0_20px_#7C5CFC15] rounded-xl p-4 flex flex-col gap-3">
             {/* Card header */}
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#7C5CFC] to-[#a855f7] flex items-center justify-center shrink-0">
@@ -367,15 +373,18 @@ export default function ProfileForm({ data, onChange }: FormProps) {
       </section>
 
       {/* ── Tech Stack ────────────────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-[#7C5CFC] uppercase tracking-widest">
-            Tech Stack
-          </h2>
+      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+        <div className="flex items-center justify-between border-b border-[#232333]/60 pb-3 mb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+            <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+              Tech Stack
+            </h2>
+          </div>
           {data.skills.length > 0 && (
             <button
               onClick={() => update('skills', [])}
-              className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-300 transition-colors"
+              className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 transition-colors"
             >
               <X size={11} />
               Clear all ({data.skills.length})
@@ -392,10 +401,10 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 key={skill}
                 onClick={() => toggleSkill(skill)}
                 title={skill}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all duration-150 ${
+                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 ${
                   active
-                    ? 'bg-[#7C5CFC]/20 border-[#7C5CFC] shadow-[0_0_8px_#7C5CFC55]'
-                    : 'bg-[#15151f] border-[#2a2a3a] hover:border-[#7C5CFC]/50 hover:bg-[#7C5CFC]/5'
+                    ? 'bg-[#7C5CFC]/15 border-[#7C5CFC] shadow-[0_0_12px_#7C5CFC44]'
+                    : 'bg-[#14141e]/50 border-[#222232] hover:border-[#7C5CFC]/40 hover:bg-[#7C5CFC]/5'
                 }`}
               >
                 <img
@@ -408,7 +417,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
                 />
                 <span
                   className={`text-[9px] leading-tight text-center w-full truncate ${
-                    active ? 'text-[#a78bfa]' : 'text-gray-600'
+                    active ? 'text-[#a78bfa]' : 'text-gray-500'
                   }`}
                 >
                   {skill}
@@ -420,10 +429,13 @@ export default function ProfileForm({ data, onChange }: FormProps) {
       </section>
 
       {/* ── GitHub Widgets & Theme ─────────────────────── */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-bold text-[#7C5CFC] uppercase tracking-widest">
-          GitHub Widgets
-        </h2>
+      <section className="flex flex-col gap-4 bg-[#111119]/70 border border-[#232333]/90 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-[#232333]/60 pb-3 mb-1">
+          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+          <h2 className="text-xs font-bold text-gray-200 uppercase tracking-widest">
+            Widgets & Theme
+          </h2>
+        </div>
 
         <label className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
@@ -432,7 +444,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           <select
             value={data.theme}
             onChange={(e) => update('theme', e.target.value)}
-            className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
+            className="bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
           >
             {THEMES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -452,7 +464,7 @@ export default function ProfileForm({ data, onChange }: FormProps) {
           ].map((item) => (
             <label
               key={item.key}
-              className="flex items-center gap-2 bg-[#15151f] border border-[#2a2a3a] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
+              className="flex items-center gap-2 bg-[#14141e]/50 border border-[#222232] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
             >
               <input
                 type="checkbox"
