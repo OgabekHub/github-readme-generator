@@ -76,6 +76,7 @@ export const TRANSLATIONS = {
     copyBtn: 'Nusxalash',
     copiedBtn: 'Nusxalandi!',
     viewProfileBtn: 'GitHub-da profilingizni ochib ko\'ring →',
+    loveThisTool: 'Loyihamiz sizga yoqdimi? Uni qo\'llab-quvvatlash uchun GitHub-da yulduzcha (⭐) qoldiring!',
   },
   en: {
     appTitle: 'GitHub README Generator',
@@ -152,6 +153,7 @@ export const TRANSLATIONS = {
     copyBtn: 'Copy',
     copiedBtn: 'Copied!',
     viewProfileBtn: 'View your profile on GitHub →',
+    loveThisTool: 'Do you love this tool? Show your support by leaving a ⭐ star on GitHub!',
   },
   ru: {
     appTitle: 'Генератор README для GitHub',
@@ -228,5 +230,6 @@ export const TRANSLATIONS = {
     copyBtn: 'Копировать',
     copiedBtn: 'Скопировано!',
     viewProfileBtn: 'Посмотреть профиль на GitHub →',
+    loveThisTool: 'Понравился инструмент? Поддержите нас, поставив ⭐ звезду на GitHub!',
   }
 }

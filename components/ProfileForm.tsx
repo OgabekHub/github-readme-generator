@@ -1050,6 +1050,22 @@ export default function ProfileForm({
                   >
                     {t.viewProfileBtn}
                   </a>
+
+                  {/* GitHub Star CTA */}
+                  <div className="border-t border-green-500/20 mt-2.5 pt-2 flex flex-col gap-2">
+                    <p className="text-[10px] text-green-300/80">
+                      {t.loveThisTool}
+                    </p>
+                    <a
+                      href="https://github.com/OgabekHub/github-readme-generator"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C5CFC] hover:bg-[#a78bfa] text-white text-[11px] font-semibold transition-all duration-150 self-start shadow-[0_0_10px_#7C5CFC33] hover:shadow-[0_0_14px_#7C5CFC55] active:scale-95"
+                    >
+                      <Sparkles size={11} className="text-yellow-300 animate-pulse" />
+                      <span>⭐ Star us on GitHub</span>
+                    </a>
+                  </div>
                 </div>
               )}
 

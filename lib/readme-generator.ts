@@ -498,7 +498,7 @@ const SKILL_CATEGORIES = {
   } else {
     lines.push('---')
     lines.push(
-      `<p align="center"><i>Generated with ❤️ using <a href="${hostUrl}" target="_blank">GitHub README Generator</a></i></p>`
+      `<p align="center"><i>Generated with ❤️ using <a href="${hostUrl}" target="_blank">GitHub README Generator</a>. Star the repository on <a href="https://github.com/OgabekHub/github-readme-generator" target="_blank">GitHub</a>! ⭐</i></p>`
     )
   }
 
