@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent: #7c5cfc;
+  --accent-light: #a78bfa;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #15151f;
+}
+::-webkit-scrollbar-thumb {
+  background: #3a3a4a;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7c5cfc;
+}
+
+/* ── Markdown preview ────────────────────────────────── */
+.md-preview h1,
+.md-preview h3 {
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+.md-preview hr {
+  border-color: #2a2a3a;
+  margin: 1rem 0;
+}
+.md-preview img {
+  display: inline-block;
+}
+.md-preview p {
+  margin: 0.5rem 0;
+}
+.md-preview ul {
+  margin-left: 1.25rem;
+  list-style: disc;
+}
+
+/* ── Animations ──────────────────────────────────────── */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 12px #7c5cfc44; }
+  50%       { box-shadow: 0 0 24px #7c5cfc88; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.slide-down {
+  animation: slideDown 0.22s ease-out forwards;
+}
+
+.fade-in {
+  animation: fadeIn 0.18s ease-out forwards;
+}
+
+.glow-pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Tab content transition ──────────────────────────── */
+.tab-content {
+  animation: fadeIn 0.15s ease-out;
+}
