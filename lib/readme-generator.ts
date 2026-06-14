@@ -32,12 +32,20 @@ export interface ProfileData {
 }
 
 export const SKILL_OPTIONS = [
-  'javascript', 'typescript', 'react', 'nextjs', 'nodejs', 'python',
-  'django', 'fastapi', 'java', 'go', 'rust', 'php', 'laravel',
-  'vue', 'angular', 'svelte', 'tailwind', 'css', 'html', 'sass',
-  'mongodb', 'postgres', 'mysql', 'redis', 'docker', 'kubernetes',
-  'aws', 'gcp', 'azure', 'git', 'github', 'figma', 'graphql',
-  'flutter', 'kotlin', 'swift', 'cpp', 'cs', 'dotnet',
+  // Languages
+  'javascript', 'typescript', 'python', 'java', 'go', 'rust', 'php', 'cpp', 'cs', 'swift', 'kotlin', 'dart', 'ruby', 'bash',
+  // Frontend & Styling
+  'react', 'nextjs', 'vue', 'angular', 'svelte', 'tailwind', 'bootstrap', 'css', 'html', 'sass', 'vite', 'redux',
+  // Backend & Frameworks
+  'nodejs', 'express', 'nestjs', 'django', 'fastapi', 'laravel', 'spring', 'flask', 'rails',
+  // Databases & ORMs
+  'mongodb', 'postgres', 'mysql', 'redis', 'sqlite', 'firebase', 'supabase', 'prisma', 'graphql',
+  // DevOps & Cloud
+  'docker', 'kubernetes', 'aws', 'gcp', 'azure', 'vercel', 'netlify', 'nginx', 'cloudflare', 'jenkins', 'terraform', 'git', 'github', 'linux', 'ubuntu',
+  // Tools & Design
+  'figma', 'postman', 'vscode',
+  // AI & Web3
+  'tensorflow', 'pytorch', 'solidity',
 ]
 
 export const SKILL_COLORS: Record<string, string> = {
@@ -80,6 +88,35 @@ export const SKILL_COLORS: Record<string, string> = {
   cpp: '#00599c',
   cs: '#239120',
   dotnet: '#512bd4',
+  // Newly added skills:
+  bootstrap: '#7952b3',
+  vite: '#646cff',
+  redux: '#764abc',
+  express: '#828282',
+  nestjs: '#e0234e',
+  spring: '#6db33f',
+  flask: '#000000',
+  ruby: '#cc342d',
+  rails: '#cc0000',
+  sqlite: '#003b57',
+  firebase: '#ffca28',
+  supabase: '#3ecf8e',
+  prisma: '#2d3748',
+  vercel: '#000000',
+  netlify: '#00c7b7',
+  nginx: '#009639',
+  cloudflare: '#f38020',
+  jenkins: '#d24939',
+  terraform: '#7b42bc',
+  linux: '#f8c018',
+  ubuntu: '#e95420',
+  bash: '#4eed30',
+  postman: '#ff6c37',
+  vscode: '#007acc',
+  tensorflow: '#ff9f00',
+  pytorch: '#ee4c2c',
+  solidity: '#363636',
+  dart: '#02569b',
 }
 
 
@@ -331,16 +368,16 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
 const SKILL_CATEGORIES = {
   frontend: [
     'html', 'css', 'javascript', 'typescript', 'react', 'nextjs', 'vue',
-    'angular', 'svelte', 'tailwind', 'sass', 'figma'
+    'angular', 'svelte', 'tailwind', 'sass', 'figma', 'bootstrap', 'vite', 'redux'
   ],
   backend: [
     'nodejs', 'python', 'django', 'fastapi', 'java', 'go', 'rust',
     'php', 'laravel', 'cpp', 'cs', 'dotnet', 'graphql', 'mongodb',
-    'postgres', 'mysql', 'redis'
+    'postgres', 'mysql', 'redis', 'express', 'nestjs', 'spring', 'flask', 'ruby', 'rails', 'sqlite', 'firebase', 'supabase', 'prisma', 'solidity'
   ],
   tools: [
     'docker', 'kubernetes', 'aws', 'gcp', 'azure', 'git', 'github',
-    'flutter', 'kotlin', 'swift'
+    'flutter', 'kotlin', 'swift', 'vercel', 'netlify', 'nginx', 'cloudflare', 'jenkins', 'terraform', 'linux', 'ubuntu', 'bash', 'postman', 'vscode', 'tensorflow', 'pytorch', 'dart'
   ]
 }
 
