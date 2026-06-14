@@ -89,25 +89,25 @@ export const SKILL_COLORS: Record<string, string> = {
   cs: '#239120',
   dotnet: '#512bd4',
   // Newly added skills:
-  bootstrap: '#7952b3',
+  bootstrap: '#9061f9', // Bright Purple
   vite: '#646cff',
-  redux: '#764abc',
-  express: '#828282',
+  redux: '#9b66ff', // Bright Violet
+  express: '#cccccc', // Light Grey/Silver
   nestjs: '#e0234e',
   spring: '#6db33f',
-  flask: '#000000',
+  flask: '#ffffff', // White
   ruby: '#cc342d',
   rails: '#cc0000',
-  sqlite: '#003b57',
+  sqlite: '#38bdf8', // Bright Blue
   firebase: '#ffca28',
   supabase: '#3ecf8e',
-  prisma: '#2d3748',
-  vercel: '#000000',
+  prisma: '#10b981', // Emerald Green
+  vercel: '#ffffff', // White
   netlify: '#00c7b7',
-  nginx: '#009639',
+  nginx: '#00d254', // Bright Green
   cloudflare: '#f38020',
   jenkins: '#d24939',
-  terraform: '#7b42bc',
+  terraform: '#845ef7', // Bright Purple
   linux: '#f8c018',
   ubuntu: '#e95420',
   bash: '#4eed30',
@@ -115,8 +115,8 @@ export const SKILL_COLORS: Record<string, string> = {
   vscode: '#007acc',
   tensorflow: '#ff9f00',
   pytorch: '#ee4c2c',
-  solidity: '#363636',
-  dart: '#02569b',
+  solidity: '#c5c5c5', // Silver
+  dart: '#0175c2', // Bright Blue
 }
 
 
