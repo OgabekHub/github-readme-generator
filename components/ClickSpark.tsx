@@ -81,7 +81,7 @@ export default function ClickSpark() {
 
         ctx.save()
         ctx.globalAlpha = p.alpha
-        ctx.shadowBlur = 8
+        ctx.shadowBlur = 88
         ctx.shadowColor = p.color
         ctx.fillStyle = p.color
         ctx.beginPath()
