@@ -75,6 +75,7 @@ export default function ProfileForm({
   const [aiTone, setAiTone] = useState<'professional' | 'minimalist' | 'creative' | 'hacker'>('professional')
   const [aiInstructions, setAiInstructions] = useState('')
   const [toneDropdownOpen, setToneDropdownOpen] = useState(false)
+  const [statsProviderOpen, setStatsProviderOpen] = useState(false)
 
   function update<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
     onChange({ ...data, [key]: value })
@@ -957,6 +958,87 @@ export default function ProfileForm({
             </label>
           ))}
         </div>
+
+        {/* Stats Provider Selector — shown when stats or top langs are enabled */}
+        {(data.showStats || data.showTopLangs) && (
+          <div className="flex flex-col gap-1.5 relative">
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t.statsProviderLabel}
+            </span>
+
+            {/* Custom Select Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                setStatsProviderOpen(!statsProviderOpen)
+                setThemeOpen(false)
+                setLayoutDropdownOpen(false)
+              }}
+              className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
+            >
+              <span>
+                {data.statsProvider === 'official' ? t.statsProviderOfficial :
+                 data.statsProvider === 'custom' ? t.statsProviderCustom :
+                 t.statsProviderExtended}
+              </span>
+              <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${statsProviderOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Custom Select Options Dropdown */}
+            {statsProviderOpen && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setStatsProviderOpen(false)}
+                />
+                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
+                  {[
+                    { value: 'extended' as const, label: t.statsProviderExtended },
+                    { value: 'official' as const, label: t.statsProviderOfficial },
+                    { value: 'custom' as const, label: t.statsProviderCustom },
+                  ].map((opt) => {
+                    const isSelected = opt.value === data.statsProvider
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          update('statsProvider', opt.value)
+                          setStatsProviderOpen(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
+                            : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
+                        }`}
+                      >
+                        <span>{opt.label}</span>
+                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Custom URL input */}
+            {data.statsProvider === 'custom' && (
+              <label className="flex flex-col gap-1.5 mt-1">
+                <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                  {t.customStatsUrlLabel}
+                </span>
+                <input
+                  type="url"
+                  value={data.customStatsUrl}
+                  onChange={(e) => update('customStatsUrl', e.target.value)}
+                  placeholder={t.customStatsUrlPlaceholder}
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
+                />
+              </label>
+            )}
+          </div>
+        )}
 
         {!data.github && (data.showStats || data.showTrophies) && (
           <p className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">

@@ -77,6 +77,12 @@ export const TRANSLATIONS = {
     copiedBtn: 'Nusxalandi!',
     viewProfileBtn: 'GitHub-da profilingizni ochib ko\'ring →',
     loveThisTool: 'Loyihamiz sizga yoqdimi? Uni qo\'llab-quvvatlash uchun GitHub-da yulduzcha (⭐) qoldiring!',
+    statsProviderLabel: 'Stats Server',
+    statsProviderOfficial: '🌐 Rasmiy (github-readme-stats)',
+    statsProviderExtended: '⚡ Extended — Barqaror (Tavsiya)',
+    statsProviderCustom: '🔧 Custom Server (Self-Hosted)',
+    customStatsUrlLabel: 'Custom Stats Server URL',
+    customStatsUrlPlaceholder: 'https://your-stats.vercel.app',
   },
   en: {
     appTitle: 'GitHub README Generator',
@@ -154,6 +160,12 @@ export const TRANSLATIONS = {
     copiedBtn: 'Copied!',
     viewProfileBtn: 'View your profile on GitHub →',
     loveThisTool: 'Do you love this tool? Show your support by leaving a ⭐ star on GitHub!',
+    statsProviderLabel: 'Stats Server',
+    statsProviderOfficial: '🌐 Official (github-readme-stats)',
+    statsProviderExtended: '⚡ Extended — Stable (Recommended)',
+    statsProviderCustom: '🔧 Custom Server (Self-Hosted)',
+    customStatsUrlLabel: 'Custom Stats Server URL',
+    customStatsUrlPlaceholder: 'https://your-stats.vercel.app',
   },
   ru: {
     appTitle: 'Генератор README для GitHub',
@@ -231,5 +243,11 @@ export const TRANSLATIONS = {
     copiedBtn: 'Скопировано!',
     viewProfileBtn: 'Посмотреть профиль на GitHub →',
     loveThisTool: 'Понравился инструмент? Поддержите нас, поставив ⭐ звезду на GitHub!',
+    statsProviderLabel: 'Stats Сервер',
+    statsProviderOfficial: '🌐 Официальный (github-readme-stats)',
+    statsProviderExtended: '⚡ Extended — Стабильный (Рекомендуется)',
+    statsProviderCustom: '🔧 Свой сервер (Self-Hosted)',
+    customStatsUrlLabel: 'URL своего Stats сервера',
+    customStatsUrlPlaceholder: 'https://your-stats.vercel.app',
   }
 }

@@ -29,6 +29,8 @@ export interface ProfileData {
   showVisitorBadge: boolean
   theme: string
   funFact: string
+  statsProvider: 'official' | 'extended' | 'custom'
+  customStatsUrl: string
 }
 
 export const SKILL_OPTIONS = [
@@ -459,11 +461,19 @@ const SKILL_CATEGORIES = {
     const align = template === 'minimalist' ? 'left' : 'center'
     const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
 
+    // Determine stats server base URL
+    const statsBaseUrl =
+      data.statsProvider === 'custom' && data.customStatsUrl
+        ? data.customStatsUrl.replace(/\/+$/, '')
+        : data.statsProvider === 'official'
+          ? 'https://github-readme-stats.vercel.app'
+          : 'https://github-readme-stats-eight-theta.vercel.app'
+
     lines.push(`<p align="${align}">`)
 
     if (data.showStats) {
       lines.push(
-        `<img src="https://github-readme-stats.vercel.app/api?username=${
+        `<img src="${statsBaseUrl}/api?username=${
           data.github || 'yourusername'
         }&show_icons=true&theme=${statsTheme}&hide_border=true&count_private=true" alt="GitHub Stats" height="165"/>`
       )
@@ -482,7 +492,7 @@ const SKILL_CATEGORIES = {
     if (data.showTopLangs) {
       lines.push(`<p align="${align}">`)
       lines.push(
-        `<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=${
+        `<img src="${statsBaseUrl}/api/top-langs/?username=${
           data.github || 'yourusername'
         }&layout=compact&theme=${statsTheme}&hide_border=true" alt="Top Languages"/>`
       )
@@ -573,4 +583,6 @@ export const DEFAULT_DATA: ProfileData = {
   showVisitorBadge: true,
   theme: 'radical',
   funFact: '',
+  statsProvider: 'extended',
+  customStatsUrl: '',
 }
