@@ -475,14 +475,14 @@ const SKILL_CATEGORIES = {
       lines.push(
         `<img src="${statsBaseUrl}/api?username=${
           data.github || 'yourusername'
-        }&show_icons=true&theme=${statsTheme}&hide_border=true&count_private=true" alt="GitHub Stats" height="165"/>`
+        }&show_icons=true&theme=${statsTheme}&hide_border=true&count_private=true" alt="GitHub Stats" />`
       )
     }
     if (data.showStreak) {
       lines.push(
         `<img src="https://github-readme-streak-stats.herokuapp.com/?user=${
           data.github || 'yourusername'
-        }&theme=${statsTheme}&hide_border=true" alt="GitHub Streak" height="165"/>`
+        }&theme=${statsTheme}&hide_border=true" alt="GitHub Streak" />`
       )
     }
 
