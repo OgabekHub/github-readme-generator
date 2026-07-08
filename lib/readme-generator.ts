@@ -27,6 +27,7 @@ export interface ProfileData {
   showTopLangs: boolean
   showTrophies: boolean
   showVisitorBadge: boolean
+  showCommittersRank: boolean
   theme: string
   funFact: string
   statsProvider: 'official' | 'extended' | 'custom'
@@ -521,8 +522,9 @@ const SKILL_CATEGORIES = {
     lines.push('')
   }
 
-  // Visitor badge
-  if (data.showVisitorBadge && data.github) {
+  // Visitor badge + Committers rank
+  const showBadgeSection = (data.showVisitorBadge || data.showCommittersRank) && data.github
+  if (showBadgeSection) {
     if (template === 'cyberpunk') {
       lines.push('// ──────────────────────────────────────────────')
     } else {
@@ -531,9 +533,18 @@ const SKILL_CATEGORIES = {
     lines.push('')
     const align = template === 'minimalist' ? 'left' : 'center'
     const badgeColor = template === 'cyberpunk' ? 'ff0055' : '7c5cfc'
-    lines.push(
-      `<p align="${align}"><img src="https://komarev.com/ghpvc/?username=${data.github}&label=Profile%20Views&color=${badgeColor}&style=for-the-badge" alt="Profile Views"/></p>`
-    )
+    const badgeParts: string[] = []
+    if (data.showVisitorBadge) {
+      badgeParts.push(
+        `<img src="https://komarev.com/ghpvc/?username=${data.github}&label=Profile%20Views&color=${badgeColor}&style=for-the-badge" alt="Profile Views"/>`
+      )
+    }
+    if (data.showCommittersRank) {
+      badgeParts.push(
+        `<a href="https://committers.top/uzbekistan" target="_blank"><img src="https://user-badge.committers.top/uzbekistan/${data.github}.svg" alt="Uzbekistan GitHub Rank"/></a>`
+      )
+    }
+    lines.push(`<p align="${align}">${badgeParts.join(' ')}</p>`)
     lines.push('')
   }
 
@@ -581,6 +592,7 @@ export const DEFAULT_DATA: ProfileData = {
   showTopLangs: true,
   showTrophies: false,
   showVisitorBadge: true,
+  showCommittersRank: false,
   theme: 'radical',
   funFact: '',
   statsProvider: 'extended',

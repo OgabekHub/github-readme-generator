@@ -10,6 +10,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'img.shields.io' },
       { protocol: 'https', hostname: 'komarev.com' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'user-badge.committers.top' },
     ],
   },
 }

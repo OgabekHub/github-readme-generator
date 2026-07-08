@@ -943,6 +943,7 @@ export default function ProfileForm({
             { key: 'showTopLangs' as const, label: t.widgetLangs },
             { key: 'showTrophies' as const, label: t.widgetTrophies },
             { key: 'showVisitorBadge' as const, label: t.widgetViews },
+            { key: 'showCommittersRank' as const, label: t.widgetCommittersRank },
           ].map((item) => (
             <label
               key={item.key}
