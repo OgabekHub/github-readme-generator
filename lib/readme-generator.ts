@@ -161,6 +161,11 @@ export const THEMES = [
   { value: 'catppuccin_mocha', label: '🐱 Catppuccin Mocha' },
   { value: 'aura', label: '✨ Aura' },
   { value: 'ambient_gradient', label: '🌅 Ambient Gradient' },
+  // 🔮 Maxsus Gradientlar (Custom)
+  { value: 'gradient_sunset', label: '🌇 Sunset Gradient' },
+  { value: 'gradient_ocean', label: '🌊 Ocean Gradient' },
+  { value: 'gradient_cyberpunk', label: '🤖 Cyberpunk Gradient' },
+  { value: 'gradient_emerald', label: '💎 Emerald Gradient' },
   { value: 'default', label: '⚪ Default (Light)' },
   { value: 'buefy', label: '🌤️ Buefy (Light)' },
   { value: 'vue', label: '💚 Vue (Light)' },
@@ -527,18 +532,35 @@ const SKILL_CATEGORIES = {
 
     lines.push(`<p align="${align}">`)
 
+    const CUSTOM_GRADIENTS: Record<string, string> = {
+      gradient_sunset: '&theme=dark&bg_color=30,ff512f,dd2476&title_color=fff&text_color=fff&icon_color=fff',
+      gradient_ocean: '&theme=dark&bg_color=45,2193b0,6dd5ed&title_color=fff&text_color=fff&icon_color=fff',
+      gradient_cyberpunk: '&theme=dark&bg_color=90,120458,ff00a0,fe2c54&title_color=fff&text_color=fff&icon_color=00ffcc',
+      gradient_emerald: '&theme=dark&bg_color=120,11998e,38ef7d&title_color=fff&text_color=fff&icon_color=fff',
+    }
+
+    const STREAK_GRADIENTS: Record<string, string> = {
+      gradient_sunset: '&theme=dark&background=30,ff512f,dd2476&ring=fff&fire=fff&currStreakNum=fff&sideNums=fff&currStreakLabel=fff&sideLabels=fff&dates=fff',
+      gradient_ocean: '&theme=dark&background=45,2193b0,6dd5ed&ring=fff&fire=fff&currStreakNum=fff&sideNums=fff&currStreakLabel=fff&sideLabels=fff&dates=fff',
+      gradient_cyberpunk: '&theme=dark&background=90,120458,ff00a0,fe2c54&ring=00ffcc&fire=ff00a0&currStreakNum=fff&sideNums=fff&currStreakLabel=fff&sideLabels=fff&dates=fff',
+      gradient_emerald: '&theme=dark&background=120,11998e,38ef7d&ring=fff&fire=fff&currStreakNum=fff&sideNums=fff&currStreakLabel=fff&sideLabels=fff&dates=fff',
+    }
+
+    const statsThemeParams = CUSTOM_GRADIENTS[statsTheme] || `&theme=${statsTheme}`
+    const streakThemeParams = STREAK_GRADIENTS[statsTheme] || `&theme=${statsTheme}`
+
     if (data.showStats) {
       lines.push(
         `<img src="${statsBaseUrl}/api?username=${
           data.github || 'yourusername'
-        }&show_icons=true&theme=${statsTheme}&hide_border=true&count_private=true" alt="GitHub Stats" />`
+        }&show_icons=true&hide_border=true&count_private=true${statsThemeParams}" alt="GitHub Stats" />`
       )
     }
     if (data.showStreak) {
       lines.push(
         `<img src="https://github-readme-streak-stats.herokuapp.com/?user=${
           data.github || 'yourusername'
-        }&theme=${statsTheme}&hide_border=true" alt="GitHub Streak" />`
+        }&hide_border=true${streakThemeParams}" alt="GitHub Streak" />`
       )
     }
 
@@ -550,7 +572,7 @@ const SKILL_CATEGORIES = {
       lines.push(
         `<img src="${statsBaseUrl}/api/top-langs/?username=${
           data.github || 'yourusername'
-        }&layout=compact&theme=${statsTheme}&hide_border=true" alt="Top Languages"/>`
+        }&layout=compact&hide_border=true${statsThemeParams}" alt="Top Languages"/>`
       )
       lines.push('</p>')
       lines.push('')
@@ -600,7 +622,7 @@ const SKILL_CATEGORIES = {
   // Profile Summary Cards
   if (data.showSummaryCards && data.github) {
     const align = template === 'minimalist' ? 'left' : 'center'
-    const cardTheme = template === 'cyberpunk' ? 'dracula' : data.theme === 'radical' ? 'dracula' : data.theme
+    const cardTheme = template === 'cyberpunk' ? 'dracula' : data.theme === 'radical' ? 'dracula' : (data.theme.startsWith('gradient_') ? 'dracula' : data.theme)
     if (template === 'cyberpunk') {
       lines.push('### 🇧 PROFILE_SUMMARY_MATRIX')
     } else {
