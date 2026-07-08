@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Github, Sparkles } from 'lucide-react'
+import { Github, Sparkles, Info } from 'lucide-react'
 import ProfileForm from '@/components/ProfileForm'
 import Preview from '@/components/Preview'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -200,6 +200,56 @@ export default function Home() {
 
         {/* Preview panel */}
         <div className="overflow-hidden flex flex-col bg-[var(--bg-input)] transition-colors duration-300">
+          {(data.showSnakeAnimation || data.show3dContrib) && data.github && (
+            <div className="bg-[#7C5CFC]/10 border-b border-[#7C5CFC]/30 px-5 py-4 text-xs text-[var(--text-main)] overflow-y-auto max-h-[40vh] shrink-0">
+              <div className="flex gap-2">
+                <Info size={16} className="text-[#7C5CFC] shrink-0 mt-0.5" />
+                <div className="w-full">
+                  <strong className="block mb-2 text-sm">⚠️ GitHub Actions Yo'riqnomasi (Diqqat)</strong>
+                  <p className="mb-3 text-[var(--text-light)]">
+                    Ushbu vidjetlar profilga o'rnatilganda ishlashi uchun, avval <b>{data.github}/{data.github}</b> repozitoriyangizda GitHub Actions sozlanishi kerak:
+                  </p>
+                  
+                  {data.showSnakeAnimation && (
+                    <div className="mb-4">
+                      <p className="mb-1 text-[var(--text-light)]">
+                        🐍 <b>Snake:</b> <code>.github/workflows/snake.yml</code> faylini yarating va ushbu kodni joylang:
+                      </p>
+                      <pre className="p-2 bg-[var(--bg-main)] rounded border border-[var(--border-input)] overflow-x-auto text-[11px] font-mono text-[var(--text-muted)]">
+{`name: Generate Snake
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Platane/snk@v3
+        with:
+          github_user_name: \${{ github.repository_owner }}
+          outputs: dist/github-contribution-grid-snake.svg?palette=github-dark
+      - uses: crazy-max/ghaction-github-pages@v3
+        with:
+          target_branch: output
+          build_dir: dist
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}`}
+                      </pre>
+                    </div>
+                  )}
+
+                  {data.show3dContrib && (
+                    <div className="mb-2">
+                      <p className="text-[var(--text-light)]">
+                        🌎 <b>3D Contrib:</b> <code>.github/workflows/3d-contrib.yml</code> faylini yaratib, workflow kodini tashlang. Batafsil ma'lumot va kod <a href="https://github.com/yoshi389111/github-profile-3d-contrib" target="_blank" className="text-[#7C5CFC] underline hover:text-[#a855f7]">rasmiy sahifasida</a>.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           <Preview markdown={markdown} lang={lang} />
         </div>
       </div>
