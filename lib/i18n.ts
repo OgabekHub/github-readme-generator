@@ -96,6 +96,11 @@ export const TRANSLATIONS = {
     statsProviderCustom: '🔧 Custom Server (Self-Hosted)',
     customStatsUrlLabel: 'Custom Stats Server URL',
     customStatsUrlPlaceholder: 'https://your-stats.vercel.app',
+    instructionsTitle: '⚠️ GitHub Actions Yo\'riqnomasi (Diqqat)',
+    instructionsDesc: 'Ushbu vidjetlar profilga o\'rnatilganda ishlashi uchun, avval <b>{repo}</b> repozitoriyangizda GitHub Actions sozlanishi kerak:',
+    instructionsSnake: '🐍 <b>Snake:</b> <code>.github/workflows/snake.yml</code> faylini yarating va ushbu kodni joylang:',
+    instructions3d: '🌎 <b>3D Contrib:</b> <code>.github/workflows/3d-contrib.yml</code> faylini yaratib, workflow kodini tashlang. Batafsil ma\'lumot va kod',
+    officialPage: 'rasmiy sahifasida',
   },
   en: {
     appTitle: 'GitHub README Generator',
@@ -192,6 +197,11 @@ export const TRANSLATIONS = {
     statsProviderCustom: '🔧 Custom Server (Self-Hosted)',
     customStatsUrlLabel: 'Custom Stats Server URL',
     customStatsUrlPlaceholder: 'https://your-stats.vercel.app',
+    instructionsTitle: '⚠️ GitHub Actions Instructions (Important)',
+    instructionsDesc: 'For these widgets to work on your profile, you first need to configure GitHub Actions in your <b>{repo}</b> repository:',
+    instructionsSnake: '🐍 <b>Snake:</b> Create a <code>.github/workflows/snake.yml</code> file and paste this code:',
+    instructions3d: '🌎 <b>3D Contrib:</b> Create a <code>.github/workflows/3d-contrib.yml</code> file and paste the workflow code. Details and code on the',
+    officialPage: 'official page',
   },
   ru: {
     appTitle: 'Генератор README для GitHub',
@@ -286,7 +296,12 @@ export const TRANSLATIONS = {
     statsProviderOfficial: '🌐 Официальный (github-readme-stats)',
     statsProviderExtended: '⚡ Extended — Стабильный (Рекомендуется)',
     statsProviderCustom: '🔧 Свой сервер (Self-Hosted)',
-    customStatsUrlLabel: 'URL своего Stats сервера',
+    customStatsUrlLabel: 'URL Кастомного Сервера Stats',
     customStatsUrlPlaceholder: 'https://your-stats.vercel.app',
+    instructionsTitle: '⚠️ Инструкции GitHub Actions (Важно)',
+    instructionsDesc: 'Чтобы эти виджеты работали в вашем профиле, сначала нужно настроить GitHub Actions в репозитории <b>{repo}</b>:',
+    instructionsSnake: '🐍 <b>Змейка (Snake):</b> Создайте файл <code>.github/workflows/snake.yml</code> и вставьте этот код:',
+    instructions3d: '🌎 <b>3D Contrib:</b> Создайте файл <code>.github/workflows/3d-contrib.yml</code> и вставьте код рабочего процесса. Подробности и код на',
+    officialPage: 'официальной странице',
   }
 }

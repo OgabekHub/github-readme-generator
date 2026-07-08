@@ -205,16 +205,18 @@ export default function Home() {
               <div className="flex gap-2">
                 <Info size={16} className="text-[#7C5CFC] shrink-0 mt-0.5" />
                 <div className="w-full">
-                  <strong className="block mb-2 text-sm">⚠️ GitHub Actions Yo'riqnomasi (Diqqat)</strong>
-                  <p className="mb-3 text-[var(--text-light)]">
-                    Ushbu vidjetlar profilga o'rnatilganda ishlashi uchun, avval <b>{data.github}/{data.github}</b> repozitoriyangizda GitHub Actions sozlanishi kerak:
-                  </p>
+                  <strong className="block mb-2 text-sm">{t.instructionsTitle}</strong>
+                  <p 
+                    className="mb-3 text-[var(--text-light)]"
+                    dangerouslySetInnerHTML={{ __html: t.instructionsDesc.replace('{repo}', `${data.github}/${data.github}`) }}
+                  />
                   
                   {data.showSnakeAnimation && (
                     <div className="mb-4">
-                      <p className="mb-1 text-[var(--text-light)]">
-                        🐍 <b>Snake:</b> <code>.github/workflows/snake.yml</code> faylini yarating va ushbu kodni joylang:
-                      </p>
+                      <p 
+                        className="mb-1 text-[var(--text-light)]"
+                        dangerouslySetInnerHTML={{ __html: t.instructionsSnake }}
+                      />
                       <pre className="p-2 bg-[var(--bg-main)] rounded border border-[var(--border-input)] overflow-x-auto text-[11px] font-mono text-[var(--text-muted)]">
 {`name: Generate Snake
 on:
@@ -242,7 +244,10 @@ jobs:
                   {data.show3dContrib && (
                     <div className="mb-2">
                       <p className="text-[var(--text-light)]">
-                        🌎 <b>3D Contrib:</b> <code>.github/workflows/3d-contrib.yml</code> faylini yaratib, workflow kodini tashlang. Batafsil ma'lumot va kod <a href="https://github.com/yoshi389111/github-profile-3d-contrib" target="_blank" className="text-[#7C5CFC] underline hover:text-[#a855f7]">rasmiy sahifasida</a>.
+                        <span dangerouslySetInnerHTML={{ __html: t.instructions3d }} />{' '}
+                        <a href="https://github.com/yoshi389111/github-profile-3d-contrib" target="_blank" rel="noopener noreferrer" className="text-[#7C5CFC] underline hover:text-[#a855f7]">
+                          {t.officialPage}
+                        </a>.
                       </p>
                     </div>
                   )}
