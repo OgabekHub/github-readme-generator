@@ -28,6 +28,7 @@ export interface ProfileData {
   showTrophies: boolean
   showVisitorBadge: boolean
   showCommittersRank: boolean
+  showActivityGraph: boolean
   theme: string
   funFact: string
   statsProvider: 'official' | 'extended' | 'custom'
@@ -522,6 +523,26 @@ const SKILL_CATEGORIES = {
     lines.push('')
   }
 
+  // Activity Graph
+  if (data.showActivityGraph && data.github) {
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const graphTheme = template === 'cyberpunk' ? 'tokyo-night' : 'react-dark'
+    if (template === 'cyberpunk') {
+      lines.push('### 📈 COMMIT_ACTIVITY_LOG')
+    } else {
+      lines.push('### 📈 Contribution Activity')
+    }
+    lines.push('')
+    lines.push(`<p align="${align}">`)
+    lines.push(
+      `<img src="https://github-readme-activity-graph.vercel.app/graph?username=${
+        data.github || 'yourusername'
+      }&theme=${graphTheme}&hide_border=true&area=true" alt="Contribution Graph" width="100%"/>`
+    )
+    lines.push('</p>')
+    lines.push('')
+  }
+
   // Visitor badge + Committers rank
   const showBadgeSection = (data.showVisitorBadge || data.showCommittersRank) && data.github
   if (showBadgeSection) {
@@ -593,6 +614,7 @@ export const DEFAULT_DATA: ProfileData = {
   showTrophies: false,
   showVisitorBadge: true,
   showCommittersRank: false,
+  showActivityGraph: false,
   theme: 'radical',
   funFact: '',
   statsProvider: 'extended',

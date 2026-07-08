@@ -11,6 +11,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'komarev.com' },
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'user-badge.committers.top' },
+      { protocol: 'https', hostname: 'github-readme-activity-graph.vercel.app' },
     ],
   },
 }

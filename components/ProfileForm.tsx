@@ -944,6 +944,7 @@ export default function ProfileForm({
             { key: 'showTrophies' as const, label: t.widgetTrophies },
             { key: 'showVisitorBadge' as const, label: t.widgetViews },
             { key: 'showCommittersRank' as const, label: t.widgetCommittersRank },
+            { key: 'showActivityGraph' as const, label: t.widgetActivityGraph },
           ].map((item) => (
             <label
               key={item.key}
