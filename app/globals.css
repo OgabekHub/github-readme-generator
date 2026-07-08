@@ -5,54 +5,94 @@
 :root {
   --accent: #7c5cfc;
   --accent-light: #a78bfa;
+  --accent-cyan: #22d3ee;
   
-  /* Default light mode variables */
+  /* Premium light mode variables */
   --bg-main: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.75);
-  --bg-input: #ffffff;
-  --border-card: rgba(226, 232, 240, 0.95);
-  --border-input: #e2e8f0;
+  --bg-card: rgba(255, 255, 255, 0.6);
+  --bg-input: rgba(255, 255, 255, 0.8);
+  --border-card: rgba(226, 232, 240, 0.6);
+  --border-input: rgba(226, 232, 240, 0.8);
   --text-main: #0f172a;
-  --text-muted: #475569;
+  --text-muted: #64748b;
   --text-light: #334155;
   --text-accent: #7c5cfc;
-  --glow-1: rgba(124, 92, 252, 0.04);
-  --glow-2: rgba(168, 85, 247, 0.04);
+  --glow-1: rgba(124, 92, 252, 0.15);
+  --glow-2: rgba(34, 211, 238, 0.15);
   
   color-scheme: light;
 }
 
-/* Class-based theme overrides */
 html.dark {
-  --bg-main: #07070c;
-  --bg-card: rgba(17, 17, 25, 0.7);
-  --bg-input: #15151f;
-  --border-card: rgba(35, 35, 51, 0.9);
-  --border-input: #2a2a3a;
-  --text-main: #f3f4f6;
-  --text-muted: #9ca3af;
-  --text-light: #d1d5db;
+  /* Premium dark mode variables - deep space feel */
+  --bg-main: #030014;
+  --bg-card: rgba(10, 10, 25, 0.4);
+  --bg-input: rgba(15, 15, 35, 0.5);
+  --border-card: rgba(255, 255, 255, 0.05);
+  --border-input: rgba(255, 255, 255, 0.08);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #cbd5e1;
   --text-accent: #a78bfa;
-  --glow-1: rgba(124, 92, 252, 0.08);
-  --glow-2: rgba(168, 85, 247, 0.08);
+  --glow-1: rgba(124, 92, 252, 0.15);
+  --glow-2: rgba(34, 211, 238, 0.15);
   
   color-scheme: dark;
 }
 
 html.light {
   --bg-main: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.75);
-  --bg-input: #ffffff;
-  --border-card: rgba(226, 232, 240, 0.95);
-  --border-input: #e2e8f0;
+  --bg-card: rgba(255, 255, 255, 0.6);
+  --bg-input: rgba(255, 255, 255, 0.8);
+  --border-card: rgba(226, 232, 240, 0.6);
+  --border-input: rgba(226, 232, 240, 0.8);
   --text-main: #0f172a;
-  --text-muted: #475569;
+  --text-muted: #64748b;
   --text-light: #334155;
   --text-accent: #7c5cfc;
-  --glow-1: rgba(124, 92, 252, 0.04);
-  --glow-2: rgba(168, 85, 247, 0.04);
+  --glow-1: rgba(124, 92, 252, 0.15);
+  --glow-2: rgba(34, 211, 238, 0.15);
   
   color-scheme: light;
+}
+
+/* Ambient Animated Background */
+body {
+  position: relative;
+  background-color: var(--bg-main);
+  overflow-x: hidden;
+}
+
+body::before, body::after {
+  content: "";
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  opacity: 0.5;
+  pointer-events: none;
+  animation: floatBg 20s infinite alternate ease-in-out;
+}
+
+body::before {
+  background: var(--glow-1);
+  top: -100px;
+  left: -100px;
+}
+
+body::after {
+  background: var(--glow-2);
+  bottom: -100px;
+  right: -100px;
+  animation-delay: -10s;
+}
+
+@keyframes floatBg {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(100px, 50px) scale(1.1); }
+  100% { transform: translate(-50px, 100px) scale(0.9); }
 }
 
 /* ── Scrollbar ───────────────────────────────────────── */

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES, SKILL_COLORS } from '@/lib/readme-generator'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
 import { TRANSLATIONS } from '@/lib/i18n'
@@ -76,6 +77,11 @@ export default function ProfileForm({
   const [aiInstructions, setAiInstructions] = useState('')
   const [toneDropdownOpen, setToneDropdownOpen] = useState(false)
   const [statsProviderOpen, setStatsProviderOpen] = useState(false)
+  const [openSection, setOpenSection] = useState<string>('basic')
+
+  const handleSectionToggle = (id: string) => {
+    setOpenSection(prev => prev === id ? '' : id)
+  }
 
   function update<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
     onChange({ ...data, [key]: value })
@@ -161,13 +167,9 @@ export default function ProfileForm({
     <div className="flex flex-col gap-6">
 
       {/* ── Basic Info ────────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-50">
-        <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
-          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
-            {t.basicInfo}
-          </h2>
-        </div>
+      <AccordionSection id="basic" title={t.basicInfo} isOpen={openSection === "basic"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
             label={t.name}
@@ -238,16 +240,14 @@ export default function ProfileForm({
             onChange={(e) => update('funFact', e.target.value)}
           />
         </div>
-      </section>
+      
+        </div>
+      </AccordionSection>
 
       {/* ── Social Links ──────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-40">
-        <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
-          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
-            {t.linksAndAi}
-          </h2>
-        </div>
+      <AccordionSection id="socials" title={t.linksAndAi} isOpen={openSection === "socials"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+
 
         {/* GitHub + AI button row */}
         <div className="flex flex-col gap-1.5">
@@ -577,17 +577,14 @@ export default function ProfileForm({
             onChange={(e) => update('website', e.target.value)}
           />
         </div>
-      </section>
+      
+        </div>
+      </AccordionSection>
 
       {/* ── Featured Projects ──────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-30">
-        <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
-              {t.featuredProjects}
-            </h2>
-          </div>
+      <AccordionSection id="projects" title={t.featuredProjects} isOpen={openSection === "projects"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+          <div className="flex justify-end mb-2">
           {data.featuredProjects.length < 5 && (
             <button
               onClick={() => {
@@ -733,17 +730,14 @@ export default function ProfileForm({
             })}
           </div>
         )}
-      </section>
+      
+        </div>
+      </AccordionSection>
 
       {/* ── Tech Stack ────────────────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-20">
-        <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
-              {t.techStack}
-            </h2>
-          </div>
+      <AccordionSection id="tech" title={t.techStack} isOpen={openSection === "tech"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+          <div className="flex justify-end mb-2">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-1.5 cursor-pointer select-none">
               <input
@@ -807,16 +801,14 @@ export default function ProfileForm({
             )
           })}
         </div>
-      </section>
+      
+        </div>
+      </AccordionSection>
 
       {/* ── GitHub Widgets & Theme ─────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm relative z-10">
-        <div className="flex items-center gap-2 border-b border-[var(--border-input)]/60 pb-3 mb-1">
-          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
-            {t.widgetsAndTheme}
-          </h2>
-        </div>
+      <AccordionSection id="stats" title={t.widgetsAndTheme} isOpen={openSection === "stats"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {/* Theme Dropdown */}
@@ -1100,17 +1092,14 @@ export default function ProfileForm({
             {t.githubRequiredWarning}
           </p>
         )}
-      </section>
+      
+        </div>
+      </AccordionSection>
 
       {/* ── GitHub Publish / Deploy ─────────────────────── */}
-      <section className="flex flex-col gap-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm border-t-[#7C5CFC]/20">
-        <div className="flex items-center justify-between border-b border-[var(--border-input)]/60 pb-3 mb-1">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
-              🚀 {t.commitToProfile.split(' ')[0]} Publish
-            </h2>
-          </div>
+      <AccordionSection id="extras" title={<>🚀 {t.commitToProfile.split(' ')[0]} Publish</>} isOpen={openSection === "extras"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+          <div className="flex justify-end mb-2">
           {session.loggedIn && (
             <button
               onClick={onLogout}
@@ -1216,7 +1205,66 @@ export default function ProfileForm({
             </div>
           </div>
         )}
-      </section>
+      
+        </div>
+      </AccordionSection>
+    </div>
+  )
+}
+
+
+function AccordionSection({ 
+  id, 
+  title, 
+  isOpen, 
+  onToggle, 
+  children 
+}: { 
+  id: string, 
+  title: string | React.ReactNode, 
+  isOpen: boolean, 
+  onToggle: (id: string) => void, 
+  children: React.ReactNode 
+}) {
+  return (
+    <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+      <button 
+        onClick={() => onToggle(id)}
+        className="w-full flex items-center justify-between p-5 focus:outline-none transition-colors hover:bg-[var(--glow-1)]"
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
+          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest flex items-center gap-1.5">
+            {title}
+          </h2>
+        </div>
+        <motion.div
+          initial={false}
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="content"
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={{
+              open: { opacity: 1, height: "auto" },
+              collapsed: { opacity: 0, height: 0 }
+            }}
+            transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+          >
+            <div className="p-5 pt-0">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

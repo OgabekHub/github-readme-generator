@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Outfit } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const outfit = Outfit({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'GitHub README Generator — Build a stunning profile in seconds',
@@ -32,9 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.className} bg-[#0a0a0f] text-gray-100 antialiased`}
-      >
+      <body className={`${outfit.className} bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen flex flex-col transition-colors duration-300`}>
         {children}
       </body>
     </html>
