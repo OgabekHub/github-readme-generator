@@ -1227,14 +1227,16 @@ function AccordionSection({
   children: React.ReactNode 
 }) {
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+    <div className={`bg-[var(--bg-card)] border rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
+      isOpen ? 'border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'border-[var(--border-card)] hover:border-[#7C5CFC]/30'
+    }`}>
       <button 
         onClick={() => onToggle(id)}
-        className="w-full flex items-center justify-between p-5 focus:outline-none transition-colors hover:bg-[var(--glow-1)]"
+        className="w-full flex items-center justify-between p-5 focus:outline-none transition-colors hover:bg-[#7C5CFC]/5"
       >
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-4.5 rounded-sm bg-gradient-to-b from-[#7C5CFC] to-[#a855f7]" />
-          <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest flex items-center gap-1.5">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-1.5 h-[18px] rounded-full bg-gradient-to-b from-[#7C5CFC] to-[#a855f7] transition-all duration-300 ${isOpen ? 'opacity-100 shadow-[0_0_8px_rgba(124,92,252,0.6)]' : 'opacity-70'}`} />
+          <h2 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors duration-300 ${isOpen ? 'text-white' : 'text-[var(--text-main)]'}`}>
             {title}
           </h2>
         </div>
@@ -1243,7 +1245,7 @@ function AccordionSection({
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />
+          <ChevronDown className={`w-5 h-5 transition-colors duration-300 ${isOpen ? 'text-[#a855f7]' : 'text-[var(--text-muted)]'}`} />
         </motion.div>
       </button>
       <AnimatePresence initial={false}>
