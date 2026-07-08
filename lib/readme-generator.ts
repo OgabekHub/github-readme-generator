@@ -523,7 +523,7 @@ const SKILL_CATEGORIES = {
         ? data.customStatsUrl.replace(/\/+$/, '')
         : data.statsProvider === 'official'
           ? 'https://github-readme-stats.vercel.app'
-          : 'https://github-readme-stats-eight-theta.vercel.app'
+          : 'https://github-stats-extended.vercel.app'
 
     lines.push(`<p align="${align}">`)
 
