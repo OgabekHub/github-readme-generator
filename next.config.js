@@ -12,6 +12,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
       { protocol: 'https', hostname: 'user-badge.committers.top' },
       { protocol: 'https', hostname: 'github-readme-activity-graph.vercel.app' },
+      { protocol: 'https', hostname: 'capsule-render.vercel.app' },
+      { protocol: 'https', hostname: 'readme-typing-svg.demolab.com' },
+      { protocol: 'https', hostname: 'github-profile-summary-cards.vercel.app' },
     ],
   },
 }

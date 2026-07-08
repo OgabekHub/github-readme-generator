@@ -29,6 +29,15 @@ export interface ProfileData {
   showVisitorBadge: boolean
   showCommittersRank: boolean
   showActivityGraph: boolean
+  showCapsuleRender: boolean
+  capsuleColor: string
+  showTypingSvg: boolean
+  typingLines: string
+  showSummaryCards: boolean
+  showSnakeAnimation: boolean
+  showWakatime: boolean
+  wakatimeUsername: string
+  show3dContrib: boolean
   theme: string
   funFact: string
   statsProvider: 'official' | 'extended' | 'custom'
@@ -164,6 +173,16 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
   const lines: string[] = []
   const template = data.layoutTemplate || 'classic'
 
+  // Capsule Render — TOP
+  if (data.showCapsuleRender) {
+    const capsuleColor = data.capsuleColor || '7C5CFC'
+    const capsuleType = template === 'cyberpunk' ? 'rect' : 'waving'
+    lines.push(
+      `<p align="center"><img src="https://capsule-render.vercel.app/api?type=${capsuleType}&color=${capsuleColor.replace('#', '')}&height=120&section=header&text=${encodeURIComponent(data.name || 'Developer')}&fontSize=36&fontColor=ffffff&animation=fadeIn" alt="Header" width="100%"/></p>`
+    )
+    lines.push('')
+  }
+
   // Banner
   if (data.showBanner) {
     const bannerUrl = `${hostUrl}/api/banner?name=${encodeURIComponent(data.name || 'Developer')}&title=${encodeURIComponent(data.title || 'Full-Stack Developer')}&theme=${data.theme}`
@@ -260,6 +279,19 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push('</p>')
       lines.push('')
     }
+  }
+
+  // Typing SVG
+  if (data.showTypingSvg) {
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const lines2type = data.typingLines
+      ? data.typingLines
+      : data.title
+        ? `${data.title};Open Source Enthusiast;Always Learning`
+        : 'Developer;Open Source Enthusiast;Always Learning'
+    const typingUrl = `https://readme-typing-svg.demolab.com?font=Fira+Code&pause=1000&color=7C5CFC&center=${template !== 'minimalist'}&width=500&lines=${encodeURIComponent(lines2type)}`
+    lines.push(`<p align="${align}"><img src="${typingUrl}" alt="Typing SVG"/></p>`)
+    lines.push('')
   }
 
   // Location & fun fact
@@ -543,6 +575,107 @@ const SKILL_CATEGORIES = {
     lines.push('')
   }
 
+  // Profile Summary Cards
+  if (data.showSummaryCards && data.github) {
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const cardTheme = template === 'cyberpunk' ? 'dracula' : data.theme === 'radical' ? 'dracula' : data.theme
+    if (template === 'cyberpunk') {
+      lines.push('### 🇧 PROFILE_SUMMARY_MATRIX')
+    } else {
+      lines.push('### 📊 Profile Summary')
+    }
+    lines.push('')
+    lines.push(`<p align="${align}">`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${data.github || 'yourusername'}&theme=${cardTheme}" alt="Profile Summary" width="100%"/>`)
+    lines.push('</p>')
+    lines.push(`<p align="${align}">`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${data.github || 'yourusername'}&theme=${cardTheme}" alt="Repos Per Language"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${data.github || 'yourusername'}&theme=${cardTheme}" alt="Most Commit Language"/>`)
+    lines.push('</p>')
+    lines.push('')
+  }
+
+  // WakaTime Stats
+  if (data.showWakatime) {
+    const wakaUser = data.wakatimeUsername || data.github || 'yourusername'
+    const align = template === 'minimalist' ? 'left' : 'center'
+    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
+    if (template === 'cyberpunk') {
+      lines.push('### ⏱️ CODING_TIME_LOG')
+    } else {
+      lines.push('### ⏱️ WakaTime Stats')
+    }
+    lines.push('')
+    lines.push('> ⚠️ *WakaTime Stats ko\'rinishi uchun [wakatime.com](https://wakatime.com) da ro\'yxatdan o\'ting va VS Code extension o\'rnating.*')
+    lines.push('')
+    lines.push(`<p align="${align}">`)
+    lines.push(`<img src="https://github-readme-stats.vercel.app/api/wakatime?username=${wakaUser}&theme=${statsTheme}&hide_border=true&layout=compact" alt="WakaTime Stats"/>`)
+    lines.push('</p>')
+    lines.push('')
+  }
+
+  // 3D Contribution
+  if (data.show3dContrib && data.github) {
+    const align = template === 'minimalist' ? 'left' : 'center'
+    if (template === 'cyberpunk') {
+      lines.push('### 🌎 3D_CONTRIBUTION_MAP')
+    } else {
+      lines.push('### 🌎 3D Contribution Graph')
+    }
+    lines.push('')
+    lines.push('> ⚠️ *Bu widget ko\'rinishi uchun profil repoda GitHub Actions sozlash kerak. Quyidagi yo\'riqnomaga amal qiling:*')
+    lines.push('>')
+    lines.push('> 1. `' + data.github + '/' + data.github + '` reponi oching')
+    lines.push('> 2. `.github/workflows/3d-contrib.yml` faylini yarating')
+    lines.push('> 3. [Bu yerdan](https://github.com/yoshi389111/github-profile-3d-contrib) workflow faylini nusxalang')
+    lines.push('')
+    lines.push(`<p align="${align}">`)
+    lines.push(`<img src="https://raw.githubusercontent.com/${data.github}/${data.github}/main/profile-3d-contrib/profile-night-rainbow.svg" alt="3D Contribution" width="100%"/>`)
+    lines.push('</p>')
+    lines.push('')
+  }
+
+  // Snake Animation
+  if (data.showSnakeAnimation && data.github) {
+    const align = template === 'minimalist' ? 'left' : 'center'
+    if (template === 'cyberpunk') {
+      lines.push('### 🐍 COMMIT_SNAKE_PROTOCOL')
+    } else {
+      lines.push('### 🐍 Contribution Snake')
+    }
+    lines.push('')
+    lines.push('> ⚠️ *Snake animatsiyasi ko\'rinishi uchun profil repoda GitHub Actions sozlash kerak:*')
+    lines.push('>')
+    lines.push('> 1. `' + data.github + '/' + data.github + '` reponi oching')
+    lines.push('> 2. `.github/workflows/snake.yml` faylini yarating:',)
+    lines.push('> ```yaml')
+    lines.push('> name: Generate Snake')
+    lines.push('> on:')
+    lines.push('>   schedule:')
+    lines.push('>     - cron: "0 0 * * *"')
+    lines.push('>   workflow_dispatch:')
+    lines.push('> jobs:')
+    lines.push('>   generate:')
+    lines.push('>     runs-on: ubuntu-latest')
+    lines.push('>     steps:')
+    lines.push('>       - uses: Platane/snk@v3')
+    lines.push('>         with:')
+    lines.push('>           github_user_name: ${{ github.repository_owner }}')
+    lines.push('>           outputs: dist/github-contribution-grid-snake.svg')
+    lines.push('>       - uses: crazy-max/ghaction-github-pages@v3')
+    lines.push('>         with:')
+    lines.push('>           target_branch: output')
+    lines.push('>           build_dir: dist')
+    lines.push('>         env:')
+    lines.push('>           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}')
+    lines.push('> ```')
+    lines.push('')
+    lines.push(`<p align="${align}">`)
+    lines.push(`<img src="https://raw.githubusercontent.com/${data.github}/${data.github}/output/github-contribution-grid-snake.svg" alt="Snake animation"/>`)
+    lines.push('</p>')
+    lines.push('')
+  }
+
   // Visitor badge + Committers rank
   const showBadgeSection = (data.showVisitorBadge || data.showCommittersRank) && data.github
   if (showBadgeSection) {
@@ -575,6 +708,14 @@ const SKILL_CATEGORIES = {
       '<p align="center"><i>// SYSTEM_GENERATED // BY_README_GEN // TERMINAL_EOF</i></p>'
     )
   } else {
+    // Capsule Render — BOTTOM
+    if (data.showCapsuleRender) {
+      const capsuleColor = data.capsuleColor || '7C5CFC'
+      lines.push(
+        `<p align="center"><img src="https://capsule-render.vercel.app/api?type=waving&color=${capsuleColor.replace('#', '')}&height=80&section=footer" alt="Footer" width="100%"/></p>`
+      )
+      lines.push('')
+    }
     lines.push('---')
     lines.push(
       `<p align="center"><i>Generated with ❤️ using <a href="${hostUrl}" target="_blank">GitHub README Generator</a>. Star the repository on <a href="https://github.com/OgabekHub/github-readme-generator" target="_blank">GitHub</a>! ⭐</i></p>`
@@ -615,6 +756,15 @@ export const DEFAULT_DATA: ProfileData = {
   showVisitorBadge: true,
   showCommittersRank: false,
   showActivityGraph: false,
+  showCapsuleRender: false,
+  capsuleColor: '#7C5CFC',
+  showTypingSvg: false,
+  typingLines: '',
+  showSummaryCards: false,
+  showSnakeAnimation: false,
+  showWakatime: false,
+  wakatimeUsername: '',
+  show3dContrib: false,
   theme: 'radical',
   funFact: '',
   statsProvider: 'extended',

@@ -938,13 +938,19 @@ export default function ProfileForm({
         <div className="grid grid-cols-2 gap-2">
           {[
             { key: 'showBanner' as const, label: t.widgetBanner },
+            { key: 'showCapsuleRender' as const, label: t.widgetCapsule },
+            { key: 'showTypingSvg' as const, label: t.widgetTypingSvg },
             { key: 'showStats' as const, label: t.widgetStats },
             { key: 'showStreak' as const, label: t.widgetStreak },
             { key: 'showTopLangs' as const, label: t.widgetLangs },
+            { key: 'showSummaryCards' as const, label: t.widgetSummaryCards },
             { key: 'showTrophies' as const, label: t.widgetTrophies },
+            { key: 'showActivityGraph' as const, label: t.widgetActivityGraph },
+            { key: 'show3dContrib' as const, label: t.widget3dContrib },
+            { key: 'showSnakeAnimation' as const, label: t.widgetSnake },
+            { key: 'showWakatime' as const, label: t.widgetWakatime },
             { key: 'showVisitorBadge' as const, label: t.widgetViews },
             { key: 'showCommittersRank' as const, label: t.widgetCommittersRank },
-            { key: 'showActivityGraph' as const, label: t.widgetActivityGraph },
           ].map((item) => (
             <label
               key={item.key}
@@ -960,6 +966,53 @@ export default function ProfileForm({
             </label>
           ))}
         </div>
+
+        {/* Capsule color picker */}
+        {data.showCapsuleRender && (
+          <div className="flex items-center gap-3 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-lg px-3 py-2">
+            <span className="text-xs text-[var(--text-muted)] shrink-0">{t.capsuleColorLabel}</span>
+            <input
+              type="color"
+              value={data.capsuleColor || '#7C5CFC'}
+              onChange={(e) => update('capsuleColor', e.target.value)}
+              className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent"
+            />
+            <span className="text-xs text-[var(--text-light)] font-mono">{data.capsuleColor || '#7C5CFC'}</span>
+          </div>
+        )}
+
+        {/* Typing SVG lines */}
+        {data.showTypingSvg && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t.typingLinesLabel}
+            </label>
+            <input
+              type="text"
+              value={data.typingLines || ''}
+              onChange={(e) => update('typingLines', e.target.value)}
+              placeholder={t.typingLinesPlaceholder}
+              className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#7C5CFC]/60"
+            />
+          </div>
+        )}
+
+        {/* WakaTime username */}
+        {data.showWakatime && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t.wakatimeUsernameLabel}
+            </label>
+            <input
+              type="text"
+              value={data.wakatimeUsername || ''}
+              onChange={(e) => update('wakatimeUsername', e.target.value)}
+              placeholder={t.wakatimePlaceholder}
+              className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#7C5CFC]/60"
+            />
+            <p className="text-xs text-amber-400">⚠️ WakaTime akkaunt va VS Code extension kerak</p>
+          </div>
+        )}
 
         {/* Stats Provider Selector — shown when stats or top langs are enabled */}
         {(data.showStats || data.showTopLangs) && (
