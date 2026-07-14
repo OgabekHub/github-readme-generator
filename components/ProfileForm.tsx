@@ -1227,8 +1227,8 @@ function AccordionSection({
   children: React.ReactNode 
 }) {
   return (
-    <div className={`bg-[var(--bg-card)] border rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
-      isOpen ? 'border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'border-[var(--border-card)] hover:border-[#7C5CFC]/30'
+    <div className={`relative bg-[var(--bg-card)] border rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
+      isOpen ? 'z-50 border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'z-10 border-[var(--border-card)] hover:border-[#7C5CFC]/30'
     }`}>
       <button 
         onClick={() => onToggle(id)}
