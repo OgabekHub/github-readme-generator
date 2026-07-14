@@ -1227,7 +1227,7 @@ function AccordionSection({
   children: React.ReactNode 
 }) {
   return (
-    <div className={`bg-[var(--bg-card)] border rounded-2xl overflow-hidden shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
+    <div className={`bg-[var(--bg-card)] border rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
       isOpen ? 'border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'border-[var(--border-card)] hover:border-[#7C5CFC]/30'
     }`}>
       <button 
@@ -1256,8 +1256,8 @@ function AccordionSection({
             animate="open"
             exit="collapsed"
             variants={{
-              open: { opacity: 1, height: "auto" },
-              collapsed: { opacity: 0, height: 0 }
+              open: { opacity: 1, height: "auto", transitionEnd: { overflow: "visible" } },
+              collapsed: { opacity: 0, height: 0, overflow: "hidden" }
             }}
             transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
           >
