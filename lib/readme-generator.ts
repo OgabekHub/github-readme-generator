@@ -558,7 +558,7 @@ const SKILL_CATEGORIES = {
     }
     if (data.showStreak) {
       lines.push(
-        `<img src="https://github-readme-streak-stats.herokuapp.com/?user=${
+        `<img src="https://streak-stats.demolab.com/?user=${
           data.github || 'OgabekHub'
         }&hide_border=true${streakThemeParams}" alt="GitHub Streak" />`
       )
