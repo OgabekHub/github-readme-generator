@@ -552,14 +552,14 @@ const SKILL_CATEGORIES = {
     if (data.showStats) {
       lines.push(
         `<img src="${statsBaseUrl}/api?username=${
-          data.github || 'yourusername'
+          data.github || 'OgabekHub'
         }&show_icons=true&hide_border=true&count_private=true${statsThemeParams}" alt="GitHub Stats" />`
       )
     }
     if (data.showStreak) {
       lines.push(
         `<img src="https://github-readme-streak-stats.herokuapp.com/?user=${
-          data.github || 'yourusername'
+          data.github || 'OgabekHub'
         }&hide_border=true${streakThemeParams}" alt="GitHub Streak" />`
       )
     }
@@ -571,7 +571,7 @@ const SKILL_CATEGORIES = {
       lines.push(`<p align="${align}">`)
       lines.push(
         `<img src="${statsBaseUrl}/api/top-langs/?username=${
-          data.github || 'yourusername'
+          data.github || 'OgabekHub'
         }&layout=compact&hide_border=true${statsThemeParams}" alt="Top Languages"/>`
       )
       lines.push('</p>')
@@ -592,7 +592,7 @@ const SKILL_CATEGORIES = {
     lines.push(`<p align="${align}">`)
     lines.push(
       `<img src="https://github-profile-trophy.vercel.app/?username=${
-        data.github || 'yourusername'
+        data.github || 'OgabekHub'
       }&theme=${statsTheme}&no-frame=true&row=1&column=6" alt="Trophies"/>`
     )
     lines.push('</p>')
@@ -612,7 +612,7 @@ const SKILL_CATEGORIES = {
     lines.push(`<p align="${align}">`)
     lines.push(
       `<img src="https://github-readme-activity-graph.vercel.app/graph?username=${
-        data.github || 'yourusername'
+        data.github || 'OgabekHub'
       }&theme=${graphTheme}&hide_border=true&area=true" alt="Contribution Graph" width="100%"/>`
     )
     lines.push('</p>')
@@ -630,18 +630,18 @@ const SKILL_CATEGORIES = {
     }
     lines.push('')
     lines.push(`<p align="${align}">`)
-    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${data.github || 'yourusername'}&theme=${cardTheme}" alt="Profile Summary" width="100%"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${data.github || 'OgabekHub'}&theme=${cardTheme}" alt="Profile Summary" width="100%"/>`)
     lines.push('</p>')
     lines.push(`<p align="${align}">`)
-    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${data.github || 'yourusername'}&theme=${cardTheme}" alt="Repos Per Language"/>`)
-    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${data.github || 'yourusername'}&theme=${cardTheme}" alt="Most Commit Language"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${data.github || 'OgabekHub'}&theme=${cardTheme}" alt="Repos Per Language"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${data.github || 'OgabekHub'}&theme=${cardTheme}" alt="Most Commit Language"/>`)
     lines.push('</p>')
     lines.push('')
   }
 
   // WakaTime Stats
   if (data.showWakatime) {
-    const wakaUser = data.wakatimeUsername || data.github || 'yourusername'
+    const wakaUser = data.wakatimeUsername || data.github || 'OgabekHub'
     const align = template === 'minimalist' ? 'left' : 'center'
     const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
     if (template === 'cyberpunk') {
