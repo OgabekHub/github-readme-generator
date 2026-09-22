@@ -4,16 +4,20 @@ import './globals.css'
 
 const outfit = Outfit({ subsets: ['latin'] })
 
+// Public URL of the deployment (absolute links for Open Graph / Twitter cards)
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+
 export const metadata: Metadata = {
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: 'GitHub README Generator — Build a stunning profile in seconds',
   description:
-    'Create a beautiful GitHub profile README in seconds — no markdown needed. AI-powered bio generator, 40+ skill icons, GitHub stats widgets.',
+    'Create a beautiful GitHub profile README in seconds — no markdown needed. AI-powered bio generator, 60+ skill icons, GitHub stats widgets.',
   keywords: ['github', 'readme', 'generator', 'profile', 'markdown', 'ai', 'open source'],
   openGraph: {
     title: 'GitHub README Generator',
     description:
       'Create a beautiful GitHub profile README in seconds — no markdown needed.',
-    url: 'https://github-readme-generator-one.vercel.app',
+    ...(siteUrl ? { url: siteUrl } : {}),
     siteName: 'GitHub README Generator',
     type: 'website',
   },

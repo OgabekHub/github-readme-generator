@@ -3,20 +3,38 @@
 import { useState, useEffect, useSyncExternalStore } from 'react'
 import { Sparkles, Info, CheckCircle, XCircle, X } from 'lucide-react'
 import GithubIcon from '@/components/GithubIcon'
-import ProfileForm from '@/components/ProfileForm'
+import ProfileForm, { CommitResult } from '@/components/ProfileForm'
 import Preview from '@/components/Preview'
 import ThemeToggle from '@/components/ThemeToggle'
 import ClickSpark from '@/components/ClickSpark'
-import { DEFAULT_DATA, generateReadme, ProfileData } from '@/lib/readme-generator'
+import { generateReadme } from '@/lib/readme-generator'
 import { Language, TRANSLATIONS, translateError } from '@/lib/i18n'
 import { escapeHtml } from '@/lib/escape'
 import { useOrigin, useStoredChoice } from '@/lib/browser-state'
+import { useProfileData } from '@/lib/form-store'
+import { cleanGithubUsername, isValidGithubUsername } from '@/lib/github-username'
 import confetti from 'canvas-confetti'
 
 type AuthNotice = { kind: 'error'; code: string } | { kind: 'connected' }
 
 const LANGUAGES = ['uz', 'en', 'ru'] as const
 const COLOR_MODES = ['dark', 'light'] as const
+
+// Stats shown in the live preview until the user enters a username (never exported)
+const DEMO_USER = 'OgabekHub'
+
+/** A banner served from these hosts cannot be loaded by GitHub. */
+function isLocalUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url)
+    return (
+      hostname === 'localhost' || hostname === '[::1]' || hostname.endsWith('.local') ||
+      /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname)
+    )
+  } catch {
+    return false
+  }
+}
 
 // Result of the GitHub OAuth redirect (/?error=… or /?connected=1), captured once
 // in the browser before the query string is cleaned up.
@@ -31,15 +49,17 @@ const oauthRedirect: AuthNotice | null = (() => {
 const noopSubscribe = () => () => {}
 
 export default function Home() {
-  const [data, setData] = useState<ProfileData>(DEFAULT_DATA)
-  const hostUrl = useOrigin('https://github-readme-generator.vercel.app')
+  const [data, setData, resetData] = useProfileData()
+  // Public URL of this app for the banner and footer link; set NEXT_PUBLIC_SITE_URL in production
+  const origin = useOrigin('')
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || origin
   const [lang, setLang] = useStoredChoice<Language>('app_lang', LANGUAGES, 'uz')
   const [theme, setTheme] = useStoredChoice<'light' | 'dark'>('app_theme', COLOR_MODES, 'dark')
   const [session, setSession] = useState<{ loggedIn: boolean; username?: string; name?: string; avatarUrl?: string }>({
     loggedIn: false,
   })
   const [committing, setCommitting] = useState(false)
-  const [commitResult, setCommitResult] = useState<{ success: boolean; url?: string; error?: string } | null>(null)
+  const [commitResult, setCommitResult] = useState<CommitResult | null>(null)
   const authResult = useSyncExternalStore(noopSubscribe, () => oauthRedirect, () => null)
   const [noticeDismissed, setNoticeDismissed] = useState(false)
   const authNotice = noticeDismissed ? null : authResult
@@ -72,7 +92,7 @@ export default function Home() {
         }
       })
       .catch((err) => console.error('Session loading failed', err))
-  }, [])
+  }, [setData])
 
   const handleSetLang = (l: Language) => {
     setLang(l)
@@ -104,10 +124,14 @@ export default function Home() {
         body: JSON.stringify({ markdown }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(translateError(lang, json.code, json.error))
+      if (!res.ok) {
+        const message = translateError(lang, json.code, json.error)
+        // Keep GitHub's own explanation for failed writes (e.g. missing permissions)
+        throw new Error(json.code === 'commit_failed' && json.error ? `${message} (${json.error})` : message)
+      }
 
-      setCommitResult({ success: true, url: json.url })
-      
+      setCommitResult({ success: true, url: json.url, warning: json.warning })
+
       // Confetti celebration!
       confetti({
         particleCount: 120,
@@ -121,7 +145,18 @@ export default function Home() {
     }
   }
 
-  const markdown = generateReadme(data, hostUrl)
+  const handleReset = () => {
+    if (window.confirm(t.resetConfirm)) {
+      resetData()
+      setCommitResult(null)
+    }
+  }
+
+  // Exported README (copy / download / commit) — never contains the demo user's stats
+  const markdown = generateReadme(data, { siteUrl })
+  const hasOwnUsername = isValidGithubUsername(cleanGithubUsername(data.github))
+  const previewMarkdown = hasOwnUsername ? markdown : generateReadme(data, { siteUrl, previewUser: DEMO_USER })
+  const demoUser = previewMarkdown !== markdown ? DEMO_USER : ''
 
   return (
     <main className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 relative overflow-hidden">
@@ -225,12 +260,14 @@ export default function Home() {
             committing={committing}
             commitResult={commitResult}
             requestedSection={authResult ? 'extras' : null}
+            bannerUnavailable={isLocalUrl(siteUrl)}
+            onReset={handleReset}
           />
         </div>
 
         {/* Preview panel */}
         <div className="overflow-hidden flex flex-col bg-[var(--bg-input)] transition-colors duration-300">
-          {(data.showSnakeAnimation || data.show3dContrib) && data.github && (
+          {(data.showSnakeAnimation || data.show3dContrib) && hasOwnUsername && (
             <div className="bg-[#7C5CFC]/10 border-b border-[#7C5CFC]/30 px-5 py-4 text-xs text-[var(--text-main)] overflow-y-auto max-h-[40vh] shrink-0">
               <div className="flex gap-2">
                 <Info size={16} className="text-[#7C5CFC] shrink-0 mt-0.5" />
@@ -238,7 +275,7 @@ export default function Home() {
                   <strong className="block mb-2 text-sm">{t.instructionsTitle}</strong>
                   <p 
                     className="mb-3 text-[var(--text-light)]"
-                    dangerouslySetInnerHTML={{ __html: t.instructionsDesc.replace('{repo}', escapeHtml(`${data.github}/${data.github}`)) }}
+                    dangerouslySetInnerHTML={{ __html: t.instructionsDesc.replace('{repo}', escapeHtml(`${cleanGithubUsername(data.github)}/${cleanGithubUsername(data.github)}`)) }}
                   />
                   
                   {data.showSnakeAnimation && (
@@ -253,6 +290,8 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -261,7 +300,7 @@ jobs:
         with:
           github_user_name: \${{ github.repository_owner }}
           outputs: dist/github-contribution-grid-snake.svg?palette=github-dark
-      - uses: crazy-max/ghaction-github-pages@v3
+      - uses: crazy-max/ghaction-github-pages@v5
         with:
           target_branch: output
           build_dir: dist
@@ -273,19 +312,46 @@ jobs:
 
                   {data.show3dContrib && (
                     <div className="mb-2">
-                      <p className="text-[var(--text-light)]">
-                        <span dangerouslySetInnerHTML={{ __html: t.instructions3d }} />{' '}
-                        <a href="https://github.com/yoshi389111/github-profile-3d-contrib" target="_blank" rel="noopener noreferrer" className="text-[#7C5CFC] underline hover:text-[#a855f7]">
-                          {t.officialPage}
-                        </a>.
-                      </p>
+                      <p
+                        className="mb-1 text-[var(--text-light)]"
+                        dangerouslySetInnerHTML={{ __html: t.instructions3d }}
+                      />
+                      <pre className="p-2 bg-[var(--bg-main)] rounded border border-[var(--border-input)] overflow-x-auto text-[11px] font-mono text-[var(--text-muted)]">
+{`name: GitHub-Profile-3D-Contrib
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: yoshi389111/github-profile-3d-contrib@latest
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          USERNAME: \${{ github.repository_owner }}
+      - name: Commit & Push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A .
+          if git commit -m "generated"; then
+            git push
+          fi`}
+                      </pre>
+                      <a href="https://github.com/yoshi389111/github-profile-3d-contrib" target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-[#7C5CFC] underline hover:text-[#a855f7]">
+                        {t.officialPage} →
+                      </a>
                     </div>
                   )}
                 </div>
               </div>
             </div>
           )}
-          <Preview markdown={markdown} lang={lang} />
+          <Preview markdown={markdown} previewMarkdown={previewMarkdown} demoUser={demoUser} lang={lang} />
         </div>
       </div>
 

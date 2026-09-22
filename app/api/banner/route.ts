@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server'
 import { escapeHtml } from '@/lib/escape'
+import { isKnownTheme, themePalette } from '@/lib/themes'
 
-const THEME_COLORS: Record<string, { bgStart: string, bgEnd: string, textStart: string, textEnd: string, accent: string, textMuted: string }> = {
+type BannerColors = { bgStart: string, bgEnd: string, textStart: string, textEnd: string, accent: string, textMuted: string }
+
+// Hand-tuned banner palettes; every other theme is derived from its widget palette
+const THEME_COLORS: Record<string, BannerColors> = {
   radical: {
     bgStart: '#0a0a0f',
     bgEnd: '#141424',
@@ -68,6 +72,37 @@ const THEME_COLORS: Record<string, { bgStart: string, bgEnd: string, textStart: 
   }
 }
 
+/** Lightens (amount > 0) or darkens (amount < 0) a 6-digit hex color. */
+function shade(hex: string, amount: number): string {
+  const n = parseInt(hex, 16)
+  const channel = (shift: number) => {
+    const c = (n >> shift) & 0xff
+    const v = amount > 0 ? c + (255 - c) * amount : c * (1 + amount)
+    return Math.round(v).toString(16).padStart(2, '0')
+  }
+  return `#${channel(16)}${channel(8)}${channel(0)}`
+}
+
+function isLight(hex: string): boolean {
+  const n = parseInt(hex, 16)
+  return (0.299 * ((n >> 16) & 0xff) + 0.587 * ((n >> 8) & 0xff) + 0.114 * (n & 0xff)) / 255 > 0.6
+}
+
+function bannerColors(theme: string): BannerColors {
+  if (Object.hasOwn(THEME_COLORS, theme)) return THEME_COLORS[theme]
+  if (!isKnownTheme(theme)) return THEME_COLORS.radical
+  const c = themePalette(theme)
+  return {
+    bgStart: `#${c.bg}`,
+    // Flat palettes get a subtle diagonal gradient like the hand-tuned ones
+    bgEnd: c.bg2 !== c.bg ? `#${c.bg2}` : shade(c.bg, isLight(c.bg) ? -0.05 : 0.08),
+    textStart: `#${c.title}`,
+    textEnd: `#${c.icon}`,
+    accent: `#${c.icon}`,
+    textMuted: `#${c.text}`,
+  }
+}
+
 const MAX_TEXT_LENGTH = 60
 
 /** Characters that are not allowed in XML 1.0 and would make the SVG unparseable. */
@@ -87,7 +122,7 @@ export async function GET(req: NextRequest) {
   const title = readText(searchParams.get('title'), 'Full-Stack Developer')
   const theme = searchParams.get('theme') ?? 'radical'
 
-  const colors = Object.hasOwn(THEME_COLORS, theme) ? THEME_COLORS[theme] : THEME_COLORS.radical
+  const colors = bannerColors(theme)
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="850" height="200" viewBox="0 0 850 200">
   <defs>

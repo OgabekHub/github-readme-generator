@@ -1,24 +1,40 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Copy, Check, Download, Eye, Code2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Copy, Check, Download, Eye, Code2, Info } from 'lucide-react'
 import { markdownToHtml } from '@/lib/markdown'
 import { useIsClient } from '@/lib/browser-state'
 import { TRANSLATIONS } from '@/lib/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 
+// Widget images are refetched whenever their URL changes, so the rendered preview
+// waits for a pause in typing instead of loading every intermediate username.
+const PREVIEW_DEBOUNCE_MS = 350
+
 interface PreviewProps {
+  /** The README that is copied, downloaded and committed */
   markdown: string
+  /** What the preview renders — may use a demo username while none is entered */
+  previewMarkdown?: string
+  /** Set when the preview shows this demo user's stats */
+  demoUser?: string
   lang?: 'uz' | 'en' | 'ru'
 }
 
-export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
+export default function Preview({ markdown, previewMarkdown = markdown, demoUser, lang = 'uz' }: PreviewProps) {
   const t = TRANSLATIONS[lang]
   const [tab, setTab] = useState<'preview' | 'code'>('preview')
   const [copied, setCopied] = useState(false)
+  const [renderedMarkdown, setRenderedMarkdown] = useState(previewMarkdown)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setRenderedMarkdown(previewMarkdown), PREVIEW_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [previewMarkdown])
+
   // Sanitizing needs the DOM, so the preview HTML is only built in the browser
   const isClient = useIsClient()
-  const html = useMemo(() => (isClient ? markdownToHtml(markdown) : ''), [isClient, markdown])
+  const html = useMemo(() => (isClient ? markdownToHtml(renderedMarkdown) : ''), [isClient, renderedMarkdown])
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(markdown)
@@ -90,6 +106,12 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
 
       {/* ── Content ───────────────────────────────────── */}
       <div className="flex-1 overflow-auto p-4 pb-24">
+        {demoUser && tab === 'preview' && (
+          <p className="flex items-start gap-2 mb-3 text-xs text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            <span>{t.demoNotice.replace('{user}', demoUser)}</span>
+          </p>
+        )}
         <AnimatePresence mode="wait">
           {tab === 'preview' ? (
             <motion.div

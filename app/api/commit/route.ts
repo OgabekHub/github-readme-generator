@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isSameOrigin, TOKEN_COOKIE } from '@/lib/auth'
+import { githubApiHeaders, isSameOrigin, TOKEN_COOKIE } from '@/lib/auth'
 
 const MAX_MARKDOWN_LENGTH = 200_000
 
@@ -30,41 +30,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'README is too large.', code: 'markdown_too_large' }, { status: 413 })
   }
 
+  const github = (path: string, init: RequestInit = {}) =>
+    fetch(`https://api.github.com${path}`, {
+      ...init,
+      headers: { ...githubApiHeaders(token), 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+    })
+  const githubError = async (res: Response) => ((await res.json().catch(() => ({}))) as { message?: string }).message || 'unknown error'
+
   try {
     // 1. Get user profile details
-    const userRes = await fetch('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-      cache: 'no-store',
-    })
-
+    const userRes = await github('/user')
     if (!userRes.ok) {
-      return NextResponse.json({ error: 'Failed to fetch GitHub user data. Token might be invalid.' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Failed to fetch GitHub user data. Token might be invalid.', code: 'unauthorized' },
+        { status: 401 }
+      )
     }
 
     const userData = await userRes.json()
     const username = encodeURIComponent(userData.login)
+    const repoPath = `/repos/${username}/${username}`
 
-    // 2. Check if username/username repository exists
-    const repoRes = await fetch(`https://api.github.com/repos/${username}/${username}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-      cache: 'no-store',
-    })
+    // 2. Check if the special username/username repository exists
+    const repoRes = await github(repoPath)
+    let created = false
+    let isPrivate = false
 
     if (repoRes.status === 404) {
-      // Create the special profile repository
-      const createRes = await fetch('https://api.github.com/user/repos', {
+      const createRes = await github('/user/repos', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           name: userData.login,
           description: 'Personal profile README created using GitHub README Generator.',
@@ -72,59 +68,68 @@ export async function POST(req: NextRequest) {
           auto_init: true,
         }),
       })
-
       if (!createRes.ok) {
-        const errData = await createRes.json()
         return NextResponse.json(
-          { error: `Failed to create profile repository: ${errData.message || 'unknown error'}` },
-          { status: 500 }
+          { error: `Failed to create profile repository: ${await githubError(createRes)}`, code: 'commit_failed' },
+          { status: 502 }
         )
       }
-
-      // Wait a moment for GitHub to finalize repository initialization
-      await new Promise((resolve) => setTimeout(resolve, 2500))
+      created = true
+    } else if (repoRes.ok) {
+      const repo = await repoRes.json()
+      if (repo.archived) {
+        return NextResponse.json(
+          { error: `${userData.login}/${userData.login} is archived and cannot be updated.`, code: 'repo_archived' },
+          { status: 409 }
+        )
+      }
+      isPrivate = !!repo.private
+    } else {
+      return NextResponse.json(
+        { error: `Failed to check profile repository: ${await githubError(repoRes)}`, code: 'commit_failed' },
+        { status: 502 }
+      )
     }
 
     // 3. Get README.md SHA if it already exists
-    const readmeRes = await fetch(`https://api.github.com/repos/${username}/${username}/contents/README.md`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-      },
-      cache: 'no-store',
-    })
-
+    const readmeRes = await github(`${repoPath}/contents/README.md`)
     let sha: string | undefined = undefined
     if (readmeRes.ok) {
       const readmeData = await readmeRes.json()
       sha = readmeData.sha
     }
 
-    // 4. Write README.md content to the repository
-    const base64Content = Buffer.from(markdown).toString('base64')
-    const putRes = await fetch(`https://api.github.com/repos/${username}/${username}/contents/README.md`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: 'docs: update profile README.md via GitHub README Generator',
-        content: base64Content,
-        sha,
-      }),
+    // 4. Write README.md content to the repository.
+    // A just-created repo can take a moment to initialize, so retry briefly instead of a fixed sleep.
+    const body = JSON.stringify({
+      message: 'docs: update profile README.md via GitHub README Generator',
+      content: Buffer.from(markdown).toString('base64'),
+      sha,
     })
+    let putRes = await github(`${repoPath}/contents/README.md`, { method: 'PUT', body })
+    for (let attempt = 1; created && attempt <= 5 && [404, 409, 422].includes(putRes.status); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt))
+      const retryReadme = await github(`${repoPath}/contents/README.md`)
+      const retrySha = retryReadme.ok ? (await retryReadme.json()).sha : undefined
+      putRes = await github(`${repoPath}/contents/README.md`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...JSON.parse(body), sha: retrySha }),
+      })
+    }
 
     if (!putRes.ok) {
-      const errData = await putRes.json()
       return NextResponse.json(
-        { error: `Failed to write README.md: ${errData.message || 'unknown error'}` },
-        { status: 500 }
+        { error: `Failed to write README.md: ${await githubError(putRes)}`, code: 'commit_failed' },
+        { status: 502 }
       )
     }
 
-    return NextResponse.json({ success: true, url: `https://github.com/${username}/${username}` })
+    return NextResponse.json({
+      success: true,
+      url: `https://github.com/${username}/${username}`,
+      // A profile README is only shown on the profile when the repo is public
+      ...(isPrivate ? { warning: 'private_repo' } : {}),
+    })
   } catch (err) {
     console.error('[commit_api_error]', err)
     return NextResponse.json({ error: 'Internal server error', code: 'commit_failed' }, { status: 500 })

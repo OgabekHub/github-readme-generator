@@ -68,6 +68,28 @@ function mapSocials(socials: { provider: string; url: string }[]) {
   return result
 }
 
+type Project = { name: string; description: string }
+
+const aiText = (value: unknown, max = 600) => (typeof value === 'string' ? value.trim().slice(0, max) : '')
+
+/**
+ * Keeps the real repo names (the AI may rename them, which would break the links)
+ * and only takes the rewritten descriptions — matched by name, then by position.
+ */
+function projectsFromAi(value: unknown, repos: Project[]): Project[] {
+  const items: unknown[] = Array.isArray(value) ? value : []
+  const describe = (item: unknown) =>
+    item && typeof item === 'object' ? aiText((item as Record<string, unknown>).description) : ''
+  return repos.map((repo, i) => {
+    const byName = items.find(
+      (item) =>
+        !!item && typeof item === 'object' &&
+        aiText((item as Record<string, unknown>).name).toLowerCase() === repo.name.toLowerCase()
+    )
+    return { name: repo.name, description: describe(byName ?? items[i]) || repo.description }
+  })
+}
+
 // ── Helper to extract clean JSON block from a string ──
 function extractJson(text: string): string {
   const trimmed = text.trim()
@@ -172,14 +194,22 @@ export async function POST(req: NextRequest) {
     const skills      = detectSkills(repos)
     const socialLinks = mapSocials(socials)
 
+    // Repos come sorted by stars
     const featuredRepos = repos.slice(0, 3).map((r) => ({
       name: r.name,
       description: r.description ?? '',
     }))
 
-    const languages = [
-      ...new Set(repos.map((r) => r.language).filter(Boolean).slice(0, 8)),
-    ].join(', ')
+    // Most used languages first
+    const languageCounts = new Map<string, number>()
+    for (const r of repos) {
+      if (r.language) languageCounts.set(r.language, (languageCounts.get(r.language) ?? 0) + 1)
+    }
+    const languages = [...languageCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([language]) => language)
+      .join(', ')
 
     let promptInstructions = ''
     if (tone === 'minimalist') {
@@ -247,35 +277,22 @@ Return the result ONLY as a raw JSON object with the following structure (do not
     const rawResult = await callGemini(apiKey, prompt, true)
     const jsonText = extractJson(rawResult)
 
-    let aiData = { 
-      bio: '', 
-      bioEn: '', 
-      bioRu: '', 
-      projects: [] as { name: string; description: string }[],
-      projectsEn: [] as { name: string; description: string }[],
-      projectsRu: [] as { name: string; description: string }[]
-    }
+    let aiData: Record<string, unknown> = {}
     try {
-      aiData = JSON.parse(jsonText)
+      const parsed = JSON.parse(jsonText)
+      if (parsed && typeof parsed === 'object') aiData = parsed
     } catch (e) {
-      console.error('[analyze] Failed to parse AI JSON:', jsonText, e)
-      aiData = { 
-        bio: rawResult, 
-        bioEn: '', 
-        bioRu: '', 
-        projects: [],
-        projectsEn: [],
-        projectsRu: []
-      }
+      // GitHub-derived suggestions (skills, socials, projects) are still useful without the AI text
+      console.error('[analyze] Failed to parse AI JSON:', jsonText.slice(0, 500), e)
     }
 
     return NextResponse.json({
-      bio:        aiData.bio || '',
-      bioEn:      aiData.bioEn || '',
-      bioRu:      aiData.bioRu || '',
-      projects:   aiData.projects || [],
-      projectsEn: aiData.projectsEn || [],
-      projectsRu: aiData.projectsRu || [],
+      bio:        aiText(aiData.bio),
+      bioEn:      aiText(aiData.bioEn),
+      bioRu:      aiText(aiData.bioRu),
+      projects:   projectsFromAi(aiData.projects, featuredRepos),
+      projectsEn: projectsFromAi(aiData.projectsEn, featuredRepos),
+      projectsRu: projectsFromAi(aiData.projectsRu, featuredRepos),
       skills,
       name:       user.name ?? '',
       location:   user.location ?? '',

@@ -2,10 +2,26 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES, SKILL_COLORS } from '@/lib/readme-generator'
+import {
+  FeaturedProject,
+  LAYOUT_TEMPLATES,
+  MAX_PROJECTS,
+  ProfileData,
+  SKILL_COLORS,
+  SKILL_OPTIONS,
+  usesGithubWidgets,
+} from '@/lib/readme-generator'
+import { THEMES } from '@/lib/themes'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
 import { TRANSLATIONS, translateError } from '@/lib/i18n'
 import { cleanGithubUsername, isValidGithubUsername } from '@/lib/github-username'
+
+export interface CommitResult {
+  success: boolean
+  url?: string
+  error?: string
+  warning?: string
+}
 
 interface FormProps {
   data: ProfileData
@@ -15,10 +31,19 @@ interface FormProps {
   onLogout: () => Promise<void>
   onCommit: () => Promise<void>
   committing: boolean
-  commitResult: { success: boolean; url?: string; error?: string } | null
+  commitResult: CommitResult | null
   /** Accordion section to open, e.g. 'extras' after returning from GitHub OAuth */
   requestedSection?: string | null
+  /** The app runs on a local URL, so a banner image would not load on GitHub */
+  bannerUnavailable?: boolean
+  onReset: () => void
 }
+
+const LANGUAGE_TABS = [
+  { bio: 'bioUz', description: 'descriptionUz', name: 'O\'zbekcha' },
+  { bio: 'bioEn', description: 'descriptionEn', name: 'English' },
+  { bio: 'bioRu', description: 'descriptionRu', name: 'Русский' },
+] as const
 
 interface AISuggestion {
   bio: string
@@ -67,6 +92,8 @@ export default function ProfileForm({
   committing,
   commitResult,
   requestedSection,
+  bannerUnavailable,
+  onReset,
 }: FormProps) {
   const t = TRANSLATIONS[lang]
   const [analyzing, setAnalyzing] = useState(false)
@@ -96,6 +123,12 @@ export default function ProfileForm({
 
   const cleanedGithub = cleanGithubUsername(data.github)
   const githubInvalid = cleanedGithub !== '' && !isValidGithubUsername(cleanedGithub)
+
+  const [confirmingCommit, setConfirmingCommit] = useState(false)
+  // Stats in the README are shown for the form's username, not for the connected account
+  const usernameMismatch =
+    !!session.username && isValidGithubUsername(cleanedGithub) &&
+    cleanedGithub.toLowerCase() !== session.username.toLowerCase()
 
   function update<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
     onChange({ ...data, [key]: value })
@@ -146,18 +179,20 @@ export default function ProfileForm({
   const applySuggestion = () => {
     if (!suggestion) return
 
-    const useMultilingual = data.multilingualReadme
-    const mainBio = useMultilingual
-      ? (suggestion.bio || data.bio)
-      : (cardBio || data.bio)
-
-    const mainProjects = useMultilingual
-      ? (suggestion.projects && suggestion.projects.length > 0 ? suggestion.projects : data.featuredProjects)
-      : (cardProjects && cardProjects.length > 0 ? cardProjects : data.featuredProjects)
+    // The main bio/description follows the UI language (single-language README);
+    // every language tab of the multilingual README gets its own translation.
+    const aiProjects: FeaturedProject[] = (suggestion.projects ?? []).map((p, i) => ({
+      name: p.name,
+      description: cardProjects?.[i]?.description || p.description,
+      descriptionUz: p.description,
+      descriptionEn: suggestion.projectsEn?.[i]?.description ?? '',
+      descriptionRu: suggestion.projectsRu?.[i]?.description ?? '',
+    }))
 
     onChange({
       ...data,
-      bio:              mainBio,
+      bio:              cardBio              || data.bio,
+      bioUz:            suggestion.bio       || data.bioUz,
       bioEn:            suggestion.bioEn     || data.bioEn,
       bioRu:            suggestion.bioRu     || data.bioRu,
       name:             suggestion.name      || data.name,
@@ -170,15 +205,26 @@ export default function ProfileForm({
       telegram:         suggestion.telegram  || data.telegram,
       facebook:         suggestion.facebook  || data.facebook,
       skills:           suggestion.skills.length > 0 ? suggestion.skills : data.skills,
-      featuredProjects: mainProjects,
-      projectsEn:       suggestion.projectsEn && suggestion.projectsEn.length > 0 ? suggestion.projectsEn : data.projectsEn,
-      projectsRu:       suggestion.projectsRu && suggestion.projectsRu.length > 0 ? suggestion.projectsRu : data.projectsRu,
+      featuredProjects: aiProjects.length > 0 ? aiProjects : data.featuredProjects,
     })
     setSuggestion(null)
   }
 
+  /* ── Featured project editing ──────────────── */
+  const updateProject = (index: number, changes: Partial<FeaturedProject>) =>
+    update('featuredProjects', data.featuredProjects.map((p, i) => (i === index ? { ...p, ...changes } : p)))
+
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex justify-end -mb-3">
+        <button
+          type="button"
+          onClick={onReset}
+          className="text-[11px] text-[var(--text-muted)] hover:text-red-400 transition-colors"
+        >
+          {t.resetForm}
+        </button>
+      </div>
 
       {/* ── Basic Info ────────────────────────────────── */}
       <AccordionSection id="basic" title={t.basicInfo} isOpen={openSection === "basic"} onToggle={handleSectionToggle}>
@@ -198,45 +244,36 @@ export default function ProfileForm({
             onChange={(e) => update('title', e.target.value)}
           />
         </div>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-            {data.multilingualReadme ? 'Bio (Uzbek)' : t.bio}
-          </span>
-          <textarea
-            placeholder={t.bioPlaceholder}
-            value={data.bio}
-            onChange={(e) => update('bio', e.target.value)}
-            rows={2}
-            className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
-          />
-        </label>
-
-        {data.multilingualReadme && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1 border-t border-[var(--border-input)]/60 pt-3.5 slide-down">
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                Bio (English)
-              </span>
-              <textarea
-                placeholder="Write your bio in English..."
-                value={data.bioEn}
-                onChange={(e) => update('bioEn', e.target.value)}
-                rows={2}
-                className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                Bio (Русский)
-              </span>
-              <textarea
-                placeholder="Напишите описание на русском..."
-                value={data.bioRu}
-                onChange={(e) => update('bioRu', e.target.value)}
-                rows={2}
-                className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
-              />
-            </label>
+        {!data.multilingualReadme ? (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t.bio}
+            </span>
+            <textarea
+              placeholder={t.bioPlaceholder}
+              value={data.bio}
+              onChange={(e) => update('bio', e.target.value)}
+              rows={2}
+              className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
+            />
+          </label>
+        ) : (
+          // Each tab falls back to the main bio, which is shown as the placeholder
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 slide-down">
+            {LANGUAGE_TABS.map((tab) => (
+              <label key={tab.bio} className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                  {t.bioFor.replace('{lang}', tab.name)}
+                </span>
+                <textarea
+                  placeholder={data.bio.trim() || t.bioPlaceholder}
+                  value={data[tab.bio]}
+                  onChange={(e) => update(tab.bio, e.target.value)}
+                  rows={3}
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                />
+              </label>
+            ))}
           </div>
         )}
 
@@ -601,19 +638,9 @@ export default function ProfileForm({
       <AccordionSection id="projects" title={t.featuredProjects} isOpen={openSection === "projects"} onToggle={handleSectionToggle}>
         <div className="flex flex-col gap-4 relative">
           <div className="flex justify-end mb-2">
-          {data.featuredProjects.length < 5 && (
+          {data.featuredProjects.length < MAX_PROJECTS && (
             <button
-              onClick={() => {
-                const updated = [...data.featuredProjects, { name: '', description: '' }]
-                const updatedEn = [...(data.projectsEn || []), { name: '', description: '' }]
-                const updatedRu = [...(data.projectsRu || []), { name: '', description: '' }]
-                onChange({
-                  ...data,
-                  featuredProjects: updated,
-                  projectsEn: updatedEn,
-                  projectsRu: updatedRu,
-                })
-              }}
+              onClick={() => update('featuredProjects', [...data.featuredProjects, { name: '', description: '' }])}
               className="text-xs font-semibold text-[#a78bfa] hover:text-[#c084fc] transition-colors"
             >
               {t.addProject}
@@ -627,36 +654,22 @@ export default function ProfileForm({
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {data.featuredProjects.map((project, idx) => {
-              const projEn = data.projectsEn?.[idx] || { name: project.name, description: '' }
-              const projRu = data.projectsRu?.[idx] || { name: project.name, description: '' }
-              
-              return (
+            {data.featuredProjects.map((project, idx) => (
                 <div
                   key={idx}
                   className="flex flex-col gap-2.5 p-4 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl relative group"
                 >
                   <button
-                    onClick={() => {
-                      const updated = data.featuredProjects.filter((_, i) => i !== idx)
-                      const updatedEn = (data.projectsEn || []).filter((_, i) => i !== idx)
-                      const updatedRu = (data.projectsRu || []).filter((_, i) => i !== idx)
-                      onChange({
-                        ...data,
-                        featuredProjects: updated,
-                        projectsEn: updatedEn,
-                        projectsRu: updatedRu,
-                      })
-                    }}
+                    onClick={() => update('featuredProjects', data.featuredProjects.filter((_, i) => i !== idx))}
                     className="absolute top-3 right-3 text-[var(--text-muted)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
                     title="Remove project"
                   >
                     <X size={14} />
                   </button>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     {/* Project Name */}
-                    <div className="flex flex-col gap-1 sm:col-span-2">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
                         {t.projectName}
                       </span>
@@ -664,86 +677,44 @@ export default function ProfileForm({
                         type="text"
                         placeholder="e.g. github-readme-generator"
                         value={project.name}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          const updated = [...data.featuredProjects]
-                          const updatedEn = [...(data.projectsEn || [])]
-                          const updatedRu = [...(data.projectsRu || [])]
-                          
-                          updated[idx] = { ...updated[idx], name: val }
-                          updatedEn[idx] = { ...projEn, name: val }
-                          updatedRu[idx] = { ...projRu, name: val }
-                          
-                          onChange({
-                            ...data,
-                            featuredProjects: updated,
-                            projectsEn: updatedEn,
-                            projectsRu: updatedRu,
-                          })
-                        }}
+                        onChange={(e) => updateProject(idx, { name: e.target.value })}
                         className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                       />
                     </div>
 
-                    {/* Descriptions */}
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
-                        {data.multilingualReadme ? 'Description (Uzbek)' : t.projectDesc}
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="Loyiha tavsifi..."
-                        value={project.description}
-                        onChange={(e) => {
-                          const updated = [...data.featuredProjects]
-                          updated[idx] = { ...updated[idx], description: e.target.value }
-                          update('featuredProjects', updated)
-                        }}
-                        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
-                      />
-                    </div>
-
-                    {data.multilingualReadme ? (
+                    {/* Descriptions — each language falls back to the main description */}
+                    {!data.multilingualReadme ? (
                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
-                          Description (English)
+                          {t.projectDesc}
                         </span>
                         <input
                           type="text"
-                          placeholder="Project description in English..."
-                          value={projEn.description}
-                          onChange={(e) => {
-                            const updatedEn = [...(data.projectsEn || [])]
-                            updatedEn[idx] = { ...projEn, description: e.target.value }
-                            update('projectsEn', updatedEn)
-                          }}
+                          placeholder={t.projectDescPlaceholder}
+                          value={project.description}
+                          onChange={(e) => updateProject(idx, { description: e.target.value })}
                           className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                         />
                       </div>
-                    ) : null}
-
-                    {data.multilingualReadme ? (
-                      <div className="flex flex-col gap-1 sm:col-span-2">
-                        <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
-                          Description (Русский)
-                        </span>
-                        <input
-                          type="text"
-                          placeholder="Описание проекта на русском..."
-                          value={projRu.description}
-                          onChange={(e) => {
-                            const updatedRu = [...(data.projectsRu || [])]
-                            updatedRu[idx] = { ...projRu, description: e.target.value }
-                            update('projectsRu', updatedRu)
-                          }}
-                          className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
-                        />
-                      </div>
-                    ) : null}
+                    ) : (
+                      LANGUAGE_TABS.map((tab) => (
+                        <div key={tab.description} className="flex flex-col gap-1">
+                          <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">
+                            {t.descriptionFor.replace('{lang}', tab.name)}
+                          </span>
+                          <input
+                            type="text"
+                            placeholder={project.description.trim() || t.projectDescPlaceholder}
+                            value={project[tab.description] ?? ''}
+                            onChange={(e) => updateProject(idx, { [tab.description]: e.target.value })}
+                            className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                          />
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
-              )
-            })}
+            ))}
           </div>
         )}
       
@@ -1103,9 +1074,15 @@ export default function ProfileForm({
           </div>
         )}
 
-        {!data.github && (data.showStats || data.showTrophies) && (
+        {!isValidGithubUsername(cleanedGithub) && usesGithubWidgets(data) && (
           <p className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
             {t.githubRequiredWarning}
+          </p>
+        )}
+
+        {data.showBanner && bannerUnavailable && (
+          <p className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
+            {t.bannerLocalWarning}
           </p>
         )}
       
@@ -1160,22 +1137,54 @@ export default function ProfileForm({
 
             {/* Commit controls */}
             <div className="flex flex-col gap-2">
-              <button
-                onClick={onCommit}
-                disabled={committing}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#7C5CFC] text-white hover:bg-[#6a4ce0] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_12px_#7C5CFC33]"
-              >
-                {committing ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>{t.committing}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>🚀 {t.commitToProfile}</span>
-                  </>
-                )}
-              </button>
+              {usernameMismatch && (
+                <p className="text-xs text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
+                  {t.usernameMismatch.replace('{form}', cleanedGithub).replace('{account}', session.username ?? '')}
+                </p>
+              )}
+
+              {!confirmingCommit ? (
+                <button
+                  onClick={() => setConfirmingCommit(true)}
+                  disabled={committing}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#7C5CFC] text-white hover:bg-[#6a4ce0] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_12px_#7C5CFC33]"
+                >
+                  {committing ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>{t.committing}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🚀 {t.commitToProfile}</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                // The commit replaces the whole README.md, so ask once before overwriting it
+                <div role="alertdialog" aria-label={t.commitToProfile} className="slide-down flex flex-col gap-2.5 text-xs bg-amber-400/10 border border-amber-400/30 rounded-xl px-3.5 py-3">
+                  <p className="text-[var(--text-light)] leading-normal">
+                    {t.commitConfirm.replace('{repo}', `${session.username}/${session.username}`)}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setConfirmingCommit(false)
+                        onCommit()
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#7C5CFC] text-white hover:bg-[#6a4ce0] active:scale-95 transition-all duration-150"
+                    >
+                      {t.commitConfirmYes}
+                    </button>
+                    <button
+                      onClick={() => setConfirmingCommit(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border-input)] text-[var(--text-muted)] hover:text-[var(--text-main)] active:scale-95 transition-all duration-150"
+                    >
+                      {t.cancel}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Success Result */}
               {commitResult?.success && (
@@ -1184,6 +1193,9 @@ export default function ProfileForm({
                     <CheckCircle size={14} className="shrink-0" />
                     <span>{t.commitSuccess}</span>
                   </div>
+                  {commitResult.warning === 'private_repo' && (
+                    <p className="text-amber-400">{t.privateRepoWarning}</p>
+                  )}
                   <a
                     href={commitResult.url}
                     target="_blank"
@@ -1215,7 +1227,7 @@ export default function ProfileForm({
               {commitResult && !commitResult.success && (
                 <div className="slide-down flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3.5 py-3 mt-1 leading-normal">
                   <XCircle size={14} className="shrink-0" />
-                  <span>{t.commitError}: {commitResult.error}</span>
+                  <span>{commitResult.error || t.commitError}</span>
                 </div>
               )}
             </div>
