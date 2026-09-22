@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Copy, Check, Download, Eye, Code2 } from 'lucide-react'
 import { markdownToHtml } from '@/lib/markdown'
 import { TRANSLATIONS } from '@/lib/i18n'
@@ -15,6 +15,12 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
   const t = TRANSLATIONS[lang]
   const [tab, setTab] = useState<'preview' | 'code'>('preview')
   const [copied, setCopied] = useState(false)
+  // Sanitizing needs the DOM, so the preview HTML is only built in the browser
+  const [html, setHtml] = useState('')
+
+  useEffect(() => {
+    setHtml(markdownToHtml(markdown))
+  }, [markdown])
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(markdown)
@@ -95,7 +101,7 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
               className="md-preview bg-[var(--bg-card)] backdrop-blur-sm rounded-xl p-8 text-sm text-[var(--text-light)] leading-relaxed border border-[var(--border-input)]/50 transition-colors duration-300 shadow-sm min-h-full"
-              dangerouslySetInnerHTML={{ __html: markdownToHtml(markdown) }}
+              dangerouslySetInnerHTML={{ __html: html }}
             />
           ) : (
             <motion.pre

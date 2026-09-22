@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Github, Sparkles, Info } from 'lucide-react'
+import { Github, Sparkles, Info, CheckCircle, XCircle, X } from 'lucide-react'
 import ProfileForm from '@/components/ProfileForm'
 import Preview from '@/components/Preview'
 import ThemeToggle from '@/components/ThemeToggle'
 import ClickSpark from '@/components/ClickSpark'
 import { DEFAULT_DATA, generateReadme, ProfileData } from '@/lib/readme-generator'
-import { TRANSLATIONS } from '@/lib/i18n'
+import { TRANSLATIONS, translateError } from '@/lib/i18n'
+import { escapeHtml } from '@/lib/escape'
 import confetti from 'canvas-confetti'
+
+type AuthNotice = { kind: 'error'; code: string } | { kind: 'connected' }
 
 export default function Home() {
   const [data, setData] = useState<ProfileData>(DEFAULT_DATA)
@@ -20,12 +23,29 @@ export default function Home() {
   })
   const [committing, setCommitting] = useState(false)
   const [commitResult, setCommitResult] = useState<{ success: boolean; url?: string; error?: string } | null>(null)
+  const [authNotice, setAuthNotice] = useState<AuthNotice | null>(null)
+  const [requestedSection, setRequestedSection] = useState<string | null>(null)
 
   // Set host url on load
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setHostUrl(window.location.origin)
     }
+  }, [])
+
+  // Result of the GitHub OAuth redirect (/?error=… or /?connected=1)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const error = params.get('error')
+    if (error) {
+      setAuthNotice({ kind: 'error', code: error })
+    } else if (params.has('connected')) {
+      setAuthNotice({ kind: 'connected' })
+    } else {
+      return
+    }
+    setRequestedSection('extras')
+    window.history.replaceState(null, '', window.location.pathname)
   }, [])
 
   // Load language preference
@@ -99,8 +119,8 @@ export default function Home() {
         body: JSON.stringify({ markdown }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Commit failed')
-      
+      if (!res.ok) throw new Error(translateError(lang, json.code, json.error))
+
       setCommitResult({ success: true, url: json.url })
       
       // Confetti celebration!
@@ -182,6 +202,31 @@ export default function Home() {
         </div>
       </header>
 
+      {/* ── GitHub connection result ───────────────────── */}
+      {authNotice && (
+        <div
+          role={authNotice.kind === 'error' ? 'alert' : 'status'}
+          className={`slide-down flex items-center gap-2 px-6 py-2.5 text-xs border-b ${
+            authNotice.kind === 'error'
+              ? 'text-red-400 bg-red-500/10 border-red-500/20'
+              : 'text-green-400 bg-green-500/10 border-green-500/20'
+          }`}
+        >
+          {authNotice.kind === 'error' ? <XCircle size={14} className="shrink-0" /> : <CheckCircle size={14} className="shrink-0" />}
+          <span className="flex-1">
+            {authNotice.kind === 'error' ? translateError(lang, authNotice.code) : t.connectedSuccess}
+          </span>
+          <button
+            type="button"
+            onClick={() => setAuthNotice(null)}
+            aria-label={t.dismiss}
+            className="p-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* ── Body ───────────────────────────────────────── */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
         {/* Form panel */}
@@ -195,6 +240,7 @@ export default function Home() {
             onCommit={handleCommit}
             committing={committing}
             commitResult={commitResult}
+            requestedSection={requestedSection}
           />
         </div>
 
@@ -208,7 +254,7 @@ export default function Home() {
                   <strong className="block mb-2 text-sm">{t.instructionsTitle}</strong>
                   <p 
                     className="mb-3 text-[var(--text-light)]"
-                    dangerouslySetInnerHTML={{ __html: t.instructionsDesc.replace('{repo}', `${data.github}/${data.github}`) }}
+                    dangerouslySetInnerHTML={{ __html: t.instructionsDesc.replace('{repo}', escapeHtml(`${data.github}/${data.github}`)) }}
                   />
                   
                   {data.showSnakeAnimation && (

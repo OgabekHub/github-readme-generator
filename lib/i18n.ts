@@ -101,6 +101,28 @@ export const TRANSLATIONS = {
     instructionsSnake: '🐍 <b>Snake:</b> <code>.github/workflows/snake.yml</code> faylini yarating va ushbu kodni joylang:',
     instructions3d: '🌎 <b>3D Contrib:</b> <code>.github/workflows/3d-contrib.yml</code> faylini yaratib, workflow kodini tashlang. Batafsil ma\'lumot va kod',
     officialPage: 'rasmiy sahifasida',
+    invalidUsername: 'Noto\'g\'ri username: faqat harf, raqam va "-" (39 belgigacha).',
+    connectedSuccess: 'GitHub akkauntingiz ulandi! Endi README\'ni profilingizga yozishingiz mumkin.',
+    dismiss: 'Yopish',
+    errors: {
+      access_denied: 'GitHub ruxsati bekor qilindi.',
+      invalid_state: 'Xavfsizlik tekshiruvi o\'tmadi. Qaytadan ulanib ko\'ring.',
+      oauth_not_configured: 'GitHub OAuth sozlanmagan: serverda GITHUB_CLIENT_ID va GITHUB_CLIENT_SECRET kerak.',
+      oauth_failed: 'GitHub bilan ulanishda xatolik yuz berdi. Qaytadan urinib ko\'ring.',
+      username_required: 'GitHub username kiriting.',
+      invalid_username: 'Noto\'g\'ri GitHub username.',
+      user_not_found: 'Bunday GitHub foydalanuvchisi topilmadi.',
+      github_rate_limited: 'GitHub API limiti tugadi. Birozdan keyin urinib ko\'ring.',
+      too_many_requests: 'Juda ko\'p so\'rov yuborildi. Bir necha daqiqadan keyin urinib ko\'ring.',
+      ai_not_configured: 'AI xizmati sozlanmagan (GEMINI_API_KEY yo\'q).',
+      ai_failed: 'AI hozir javob bermayapti. Birozdan keyin urinib ko\'ring.',
+      analysis_failed: 'Tahlil amalga oshmadi. Qaytadan urinib ko\'ring.',
+      unauthorized: 'Avval GitHub bilan ulaning.',
+      forbidden: 'So\'rov rad etildi.',
+      markdown_too_large: 'README juda katta.',
+      commit_failed: 'README yozilmadi. Qaytadan urinib ko\'ring.',
+      unknown: 'Noma\'lum xatolik yuz berdi.',
+    } as Record<string, string>,
   },
   en: {
     appTitle: 'GitHub README Generator',
@@ -202,6 +224,28 @@ export const TRANSLATIONS = {
     instructionsSnake: '🐍 <b>Snake:</b> Create a <code>.github/workflows/snake.yml</code> file and paste this code:',
     instructions3d: '🌎 <b>3D Contrib:</b> Create a <code>.github/workflows/3d-contrib.yml</code> file and paste the workflow code. Details and code on the',
     officialPage: 'official page',
+    invalidUsername: 'Invalid username: letters, digits and "-" only (up to 39 characters).',
+    connectedSuccess: 'Your GitHub account is connected! You can now commit the README to your profile.',
+    dismiss: 'Dismiss',
+    errors: {
+      access_denied: 'GitHub authorization was cancelled.',
+      invalid_state: 'Security check failed. Please connect again.',
+      oauth_not_configured: 'GitHub OAuth is not configured: the server needs GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET.',
+      oauth_failed: 'Could not connect to GitHub. Please try again.',
+      username_required: 'Enter a GitHub username.',
+      invalid_username: 'Invalid GitHub username.',
+      user_not_found: 'GitHub user not found.',
+      github_rate_limited: 'GitHub API rate limit reached. Please try again later.',
+      too_many_requests: 'Too many requests. Please try again in a few minutes.',
+      ai_not_configured: 'AI service is not configured (missing GEMINI_API_KEY).',
+      ai_failed: 'The AI is not responding right now. Please try again later.',
+      analysis_failed: 'Analysis failed. Please try again.',
+      unauthorized: 'Please connect with GitHub first.',
+      forbidden: 'Request rejected.',
+      markdown_too_large: 'The README is too large.',
+      commit_failed: 'The README could not be committed. Please try again.',
+      unknown: 'An unknown error occurred.',
+    } as Record<string, string>,
   },
   ru: {
     appTitle: 'Генератор README для GitHub',
@@ -303,5 +347,43 @@ export const TRANSLATIONS = {
     instructionsSnake: '🐍 <b>Змейка (Snake):</b> Создайте файл <code>.github/workflows/snake.yml</code> и вставьте этот код:',
     instructions3d: '🌎 <b>3D Contrib:</b> Создайте файл <code>.github/workflows/3d-contrib.yml</code> и вставьте код рабочего процесса. Подробности и код на',
     officialPage: 'официальной странице',
+    invalidUsername: 'Некорректное имя: только буквы, цифры и "-" (до 39 символов).',
+    connectedSuccess: 'Аккаунт GitHub подключён! Теперь можно опубликовать README в профиль.',
+    dismiss: 'Закрыть',
+    errors: {
+      access_denied: 'Авторизация GitHub отменена.',
+      invalid_state: 'Проверка безопасности не пройдена. Подключитесь заново.',
+      oauth_not_configured: 'GitHub OAuth не настроен: на сервере нужны GITHUB_CLIENT_ID и GITHUB_CLIENT_SECRET.',
+      oauth_failed: 'Не удалось подключиться к GitHub. Попробуйте снова.',
+      username_required: 'Введите имя пользователя GitHub.',
+      invalid_username: 'Некорректное имя пользователя GitHub.',
+      user_not_found: 'Пользователь GitHub не найден.',
+      github_rate_limited: 'Достигнут лимит GitHub API. Попробуйте позже.',
+      too_many_requests: 'Слишком много запросов. Попробуйте через несколько минут.',
+      ai_not_configured: 'ИИ-сервис не настроен (нет GEMINI_API_KEY).',
+      ai_failed: 'ИИ сейчас не отвечает. Попробуйте позже.',
+      analysis_failed: 'Анализ не удался. Попробуйте снова.',
+      unauthorized: 'Сначала подключите GitHub.',
+      forbidden: 'Запрос отклонён.',
+      markdown_too_large: 'README слишком большой.',
+      commit_failed: 'Не удалось опубликовать README. Попробуйте снова.',
+      unknown: 'Произошла неизвестная ошибка.',
+    } as Record<string, string>,
   }
+}
+
+// OAuth callback codes that all mean "connecting failed, try again"
+const ERROR_ALIASES: Record<string, string> = {
+  no_code: 'oauth_failed',
+  no_token: 'oauth_failed',
+  oauth_error: 'oauth_failed',
+  callback_failed: 'oauth_failed',
+  invalid_request: 'analysis_failed',
+}
+
+/** Translated message for an API/OAuth error code, falling back to the server's own message. */
+export function translateError(lang: Language, code?: string | null, fallback?: string): string {
+  const errors = TRANSLATIONS[lang].errors
+  const key = code ? ERROR_ALIASES[code] ?? code : ''
+  return (key && errors[key]) || fallback || errors.unknown
 }

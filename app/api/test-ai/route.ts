@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server'
+import { readEnv } from '@/lib/env'
 
 /**
- * Diagnostic endpoint — visits /api/test-ai to see:
+ * Diagnostic endpoint (development only) — visit /api/test-ai to see:
  * - Is the GEMINI_API_KEY valid?
  * - Which models are available for this key?
  */
 export async function GET() {
-  const apiKey = process.env.GEMINI_API_KEY
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  const apiKey = readEnv('GEMINI_API_KEY')
   if (!apiKey) {
     return NextResponse.json({ error: 'GEMINI_API_KEY is not set' }, { status: 503 })
   }
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}&pageSize=50`,
-    { cache: 'no-store' }
-  )
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
+    headers: { 'x-goog-api-key': apiKey },
+    cache: 'no-store',
+  })
 
   const data = await res.json()
 

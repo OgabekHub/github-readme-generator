@@ -1,21 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { STATE_COOKIE, TOKEN_COOKIE } from '@/lib/auth'
+import { readEnv } from '@/lib/env'
+
+/** Redirects back to the app; the page shows a translated message for the error code. */
+function redirectHome(req: NextRequest, query: string) {
+  const response = NextResponse.redirect(new URL(`/?${query}`, req.url))
+  response.cookies.delete({ name: STATE_COOKIE, path: '/api/auth' })
+  return response
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
+  const state = searchParams.get('state')
+  const expectedState = req.cookies.get(STATE_COOKIE)?.value
 
+  // User pressed "Cancel" on GitHub
+  if (searchParams.get('error')) {
+    return redirectHome(req, 'error=access_denied')
+  }
   if (!code) {
-    return NextResponse.redirect(new URL('/?error=no_code', req.url))
+    return redirectHome(req, 'error=no_code')
+  }
+  if (!state || !expectedState || state !== expectedState) {
+    return redirectHome(req, 'error=invalid_state')
   }
 
-  const client_id = process.env.GITHUB_CLIENT_ID
-  const client_secret = process.env.GITHUB_CLIENT_SECRET
-
+  const client_id = readEnv('GITHUB_CLIENT_ID')
+  const client_secret = readEnv('GITHUB_CLIENT_SECRET')
   if (!client_id || !client_secret) {
-    return NextResponse.json(
-      { error: 'GitHub OAuth Client ID or Client Secret is not configured. Please add them to .env.local' },
-      { status: 500 }
-    )
+    return redirectHome(req, 'error=oauth_not_configured')
   }
 
   try {
@@ -29,25 +43,26 @@ export async function GET(req: NextRequest) {
         client_id,
         client_secret,
         code,
+        redirect_uri: `${new URL(req.url).origin}/api/auth/callback`,
       }),
+      signal: AbortSignal.timeout(10_000),
     })
 
     const tokenData = await tokenRes.json()
 
     if (tokenData.error) {
-      return NextResponse.redirect(
-        new URL(`/?error=${encodeURIComponent(tokenData.error_description || 'oauth_error')}`, req.url)
-      )
+      console.error('[oauth_callback_error]', tokenData.error, tokenData.error_description)
+      return redirectHome(req, 'error=oauth_error')
     }
 
     const access_token = tokenData.access_token
     if (!access_token) {
-      return NextResponse.redirect(new URL('/?error=no_token', req.url))
+      return redirectHome(req, 'error=no_token')
     }
 
-    // Redirect back to landing page and store the token in a secure http-only cookie
-    const response = NextResponse.redirect(new URL('/', req.url))
-    response.cookies.set('gh_token', access_token, {
+    // Redirect back to the page and store the token in a secure http-only cookie
+    const response = redirectHome(req, 'connected=1')
+    response.cookies.set(TOKEN_COOKIE, access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -58,6 +73,6 @@ export async function GET(req: NextRequest) {
     return response
   } catch (err) {
     console.error('[oauth_callback_error]', err)
-    return NextResponse.redirect(new URL('/?error=callback_failed', req.url))
+    return redirectHome(req, 'error=callback_failed')
   }
 }

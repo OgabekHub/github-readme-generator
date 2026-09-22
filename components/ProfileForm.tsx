@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES, SKILL_COLORS } from '@/lib/readme-generator'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
-import { TRANSLATIONS } from '@/lib/i18n'
+import { TRANSLATIONS, translateError } from '@/lib/i18n'
+import { cleanGithubUsername, isValidGithubUsername } from '@/lib/github-username'
 
 interface FormProps {
   data: ProfileData
@@ -15,6 +16,8 @@ interface FormProps {
   onCommit: () => Promise<void>
   committing: boolean
   commitResult: { success: boolean; url?: string; error?: string } | null
+  /** Accordion section to open, e.g. 'extras' after returning from GitHub OAuth */
+  requestedSection?: string | null
 }
 
 interface AISuggestion {
@@ -62,7 +65,8 @@ export default function ProfileForm({
   onLogout,
   onCommit,
   committing,
-  commitResult
+  commitResult,
+  requestedSection,
 }: FormProps) {
   const t = TRANSLATIONS[lang]
   const [analyzing, setAnalyzing] = useState(false)
@@ -82,6 +86,13 @@ export default function ProfileForm({
   const handleSectionToggle = (id: string) => {
     setOpenSection(prev => prev === id ? '' : id)
   }
+
+  useEffect(() => {
+    if (requestedSection) setOpenSection(requestedSection)
+  }, [requestedSection])
+
+  const cleanedGithub = cleanGithubUsername(data.github)
+  const githubInvalid = cleanedGithub !== '' && !isValidGithubUsername(cleanedGithub)
 
   function update<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
     onChange({ ...data, [key]: value })
@@ -104,7 +115,7 @@ export default function ProfileForm({
 
   /* ── AI Analyze ────────────────────────────────────── */
   const handleAnalyze = async () => {
-    if (!data.github.trim()) return
+    if (!cleanedGithub || githubInvalid) return
     setAnalyzing(true)
     setAiError(null)
     setSuggestion(null)
@@ -112,17 +123,17 @@ export default function ProfileForm({
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: data.github,
+        body: JSON.stringify({
+          username: cleanedGithub,
           tone: aiTone,
           instructions: aiInstructions
         }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Tahlil muvaffaqiyatsiz')
+      if (!res.ok) throw new Error(translateError(lang, json.code, json.error))
       setSuggestion(json as AISuggestion)
     } catch (e: unknown) {
-      setAiError(e instanceof Error ? e.message : 'Noma\'lum xatolik')
+      setAiError(e instanceof Error ? e.message : t.errors.unknown)
     } finally {
       setAnalyzing(false)
     }
@@ -258,21 +269,20 @@ export default function ProfileForm({
             <input
               placeholder="ogabek"
               value={data.github}
+              aria-invalid={githubInvalid}
               onChange={(e) => update('github', e.target.value.trim())}
-              onBlur={(e) => {
-                const cleaned = e.target.value.trim()
-                  .replace(/^@/, '')
-                  .replace(/^(https?:\/\/)?(www\.)?github\.com\//i, '')
-                  .split(/[?#]/)[0]
-                  .replace(/\/$/, '')
-                update('github', cleaned)
+              onPaste={(e) => {
+                // Pasting a profile URL keeps just the username
+                e.preventDefault()
+                update('github', cleanGithubUsername(e.clipboardData.getData('text')))
               }}
+              onBlur={(e) => update('github', cleanGithubUsername(e.target.value))}
               className="flex-1 min-w-0 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
             />
             <button
               type="button"
               onClick={handleAnalyze}
-              disabled={!data.github.trim() || analyzing}
+              disabled={!cleanedGithub || githubInvalid || analyzing}
               title="Analyze GitHub profile with AI"
               className="flex shrink-0 items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#7C5CFC] to-[#a855f7] text-white hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_14px_#7C5CFC44] hover:shadow-[0_0_20px_#7C5CFC66]"
             >
@@ -286,6 +296,9 @@ export default function ProfileForm({
               </span>
             </button>
           </div>
+          {githubInvalid && (
+            <p className="text-[11px] text-amber-400">{t.invalidUsername}</p>
+          )}
         </div>
 
         {/* AI Options Toggle */}

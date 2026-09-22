@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { escapeHtml } from '@/lib/escape'
 
 const THEME_COLORS: Record<string, { bgStart: string, bgEnd: string, textStart: string, textEnd: string, accent: string, textMuted: string }> = {
   radical: {
@@ -67,13 +68,26 @@ const THEME_COLORS: Record<string, { bgStart: string, bgEnd: string, textStart: 
   }
 }
 
+const MAX_TEXT_LENGTH = 60
+
+/** Characters that are not allowed in XML 1.0 and would make the SVG unparseable. */
+const INVALID_XML_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g
+
+/** Trims, length-limits (by code point) and XML-escapes a query value. */
+function readText(value: string | null, fallback: string): string {
+  const text = Array.from((value ?? '').replace(INVALID_XML_CHARS, '').trim())
+    .slice(0, MAX_TEXT_LENGTH)
+    .join('')
+  return escapeHtml(text || fallback)
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const name = searchParams.get('name') || 'Developer'
-  const title = searchParams.get('title') || 'Full-Stack Developer'
-  const theme = searchParams.get('theme') || 'radical'
+  const name = readText(searchParams.get('name'), 'Developer')
+  const title = readText(searchParams.get('title'), 'Full-Stack Developer')
+  const theme = searchParams.get('theme') ?? 'radical'
 
-  const colors = THEME_COLORS[theme] || THEME_COLORS.radical
+  const colors = Object.hasOwn(THEME_COLORS, theme) ? THEME_COLORS[theme] : THEME_COLORS.radical
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="850" height="200" viewBox="0 0 850 200">
   <defs>
@@ -133,8 +147,11 @@ export async function GET(req: NextRequest) {
 
   return new Response(svg, {
     headers: {
-      'Content-Type': 'image/svg+xml',
+      'Content-Type': 'image/svg+xml; charset=utf-8',
       'Cache-Control': 'public, max-age=3600, must-revalidate',
+      // Opened directly (not via <img>), an SVG is a document — never let it run scripts
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'",
+      'X-Content-Type-Options': 'nosniff',
     },
   })
 }

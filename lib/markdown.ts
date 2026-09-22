@@ -1,72 +1,30 @@
-// Minimal markdown -> HTML converter, tailored to the output of
-// generateReadme(). Not a full markdown parser — just enough to
-// render badges, images, links, bold text, and lists for the preview.
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
 
-export function markdownToHtml(markdown: string): string {
-  const lines = markdown.split('\n')
-  const html: string[] = []
-  let inList = false
+// Renders the generated README for the live preview: GitHub-flavored Markdown
+// (including raw HTML blocks such as <p align="center">) sanitized with DOMPurify,
+// so nothing in the README can run scripts inside the app.
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim()
-
-    // Pass through raw HTML lines (h1, h3, p, hr, img, etc.)
-    if (/^<\/?(h1|h3|p|hr|img|br)/i.test(line) || line === '') {
-      if (inList) {
-        html.push('</ul>')
-        inList = false
-      }
-      if (line !== '') html.push(convertInline(line))
-      continue
+if (DOMPurify.isSupported) {
+  // Links in the preview open in a new tab, so the form is never navigated away from
+  DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    if (node.tagName === 'A') {
+      node.setAttribute('target', '_blank')
+      node.setAttribute('rel', 'noopener noreferrer')
     }
-
-    // Markdown bullet list
-    if (line.startsWith('- ')) {
-      if (!inList) {
-        html.push('<ul>')
-        inList = true
-      }
-      html.push(`<li>${convertInline(line.slice(2))}</li>`)
-      continue
-    }
-
-    if (inList) {
-      html.push('</ul>')
-      inList = false
-    }
-
-    // Markdown headings
-    if (line.startsWith('### ')) {
-      html.push(`<h3>${convertInline(line.slice(4))}</h3>`)
-      continue
-    }
-
-    // Default: paragraph
-    html.push(`<p>${convertInline(line)}</p>`)
-  }
-
-  if (inList) html.push('</ul>')
-
-  return html.join('\n')
+  })
 }
 
-function convertInline(text: string): string {
-  let out = text
+const PURIFY_CONFIG = {
+  ADD_ATTR: ['target'],
+  // GitHub strips inline styles and form controls from READMEs too
+  FORBID_ATTR: ['style'],
+  FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select'],
+}
 
-  // Bold: **text**
-  out = out.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-
-  // Markdown image-link badges: [![alt](src)](href)
-  out = out.replace(
-    /\[!\[([^\]]*)\]\(([^)]+)\)\]\(([^)]+)\)/g,
-    '<a href="$3" target="_blank" rel="noopener noreferrer"><img src="$2" alt="$1" style="display:inline-block;margin:2px"/></a>'
-  )
-
-  // Plain markdown images: ![alt](src)
-  out = out.replace(
-    /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" style="display:inline-block"/>'
-  )
-
-  return out
+/** Returns sanitized HTML, or '' where no DOM is available (server render). */
+export function markdownToHtml(markdown: string): string {
+  if (!DOMPurify.isSupported) return ''
+  const html = marked.parse(markdown, { async: false, gfm: true })
+  return DOMPurify.sanitize(html, PURIFY_CONFIG)
 }

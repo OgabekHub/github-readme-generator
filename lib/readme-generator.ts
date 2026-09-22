@@ -1,3 +1,6 @@
+import { escapeHtml } from './escape'
+import { cleanGithubUsername, isValidGithubUsername } from './github-username'
+
 export interface ProfileData {
   name: string
   title: string
@@ -177,42 +180,122 @@ export const LAYOUT_TEMPLATES = [
   { value: 'cyberpunk', label: 'Cyberpunk (Neon / Kiber)' },
 ]
 
-const SOCIAL_ICONS: Record<string, (val: string) => string> = {
-  twitter: (v) =>
-    `<a href="https://twitter.com/${v.replace('@', '')}" target="_blank"><img src="https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white" alt="Twitter" /></a>`,
-  linkedin: (v) =>
-    `<a href="${v.startsWith('http') ? v : `https://linkedin.com/in/${v}`}" target="_blank"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>`,
-  telegram: (v) =>
-    `<a href="https://t.me/${v.replace('@', '')}" target="_blank"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram" /></a>`,
-  facebook: (v) =>
-    `<a href="${v.startsWith('http') ? v : `https://facebook.com/${v}`}" target="_blank"><img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook" /></a>`,
-  instagram: (v) =>
-    `<a href="https://instagram.com/${v.replace('@', '')}" target="_blank"><img src="https://img.shields.io/badge/Instagram-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram" /></a>`,
-  youtube: (v) =>
-    `<a href="${v.startsWith('http') ? v : `https://youtube.com/${v}`}" target="_blank"><img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube" /></a>`,
-  website: (v) =>
-    `<a href="${v.startsWith('http') ? v : `https://${v}`}" target="_blank"><img src="https://img.shields.io/badge/Website-7C5CFC?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website" /></a>`,
-  email: (v) =>
-    `<a href="mailto:${v}"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" /></a>`,
+// ── Output safety helpers ───────────────────────────────
+// Everything the user (or the AI / a GitHub profile) typed is escaped: GitHub renders
+// the entities back as plain characters, and the live preview can never run injected HTML.
+
+function safeText(value: string): string {
+  return escapeHtml(value.trim())
+}
+
+/** Multi-line text inside an HTML block — a blank line would end the block early. */
+function safeMultiline(value: string): string {
+  return safeText(value).replace(/\r?\n/g, '<br/>')
+}
+
+/** Link text for `[text](url)` — brackets would end the link label early. */
+function safeLinkText(value: string): string {
+  return safeText(value).replace(/[[\]]/g, '\\$&')
+}
+
+/** URL for a Markdown `(url)` target — parentheses would end the target early. */
+function markdownUrl(url: string): string {
+  return url.replace(/\(/g, '%28').replace(/\)/g, '%29')
+}
+
+/** Returns a normalized absolute http(s) URL, or '' if the value is not one. */
+function httpUrl(value: string): string {
+  try {
+    const url = new URL(value.trim())
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
+  } catch {
+    return ''
+  }
+}
+
+/** Accepts a full profile URL, "site.com/path" or a bare handle ("@user", "user"). */
+function profileUrl(value: string, base: string): string {
+  const v = value.trim()
+  if (!v) return ''
+  if (/^https?:\/\//i.test(v)) return httpUrl(v)
+  if (/^(www\.)?[a-z\d-]+(\.[a-z\d-]+)+\//i.test(v)) return httpUrl(`https://${v}`)
+  const handle = v.replace(/^@/, '').split(/[/?#\s]/)[0]
+  return handle ? `${base}${encodeURIComponent(handle)}` : ''
+}
+
+function websiteUrl(value: string): string {
+  const v = value.trim()
+  if (!v) return ''
+  return httpUrl(/^https?:\/\//i.test(v) ? v : `https://${v}`)
+}
+
+function emailUrl(value: string): string {
+  const v = value.trim()
+  return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(v) ? `mailto:${v}` : ''
+}
+
+type SocialKey = 'twitter' | 'linkedin' | 'telegram' | 'facebook' | 'instagram' | 'youtube' | 'website' | 'email'
+
+const SOCIAL_LINKS: { key: SocialKey; label: string; color: string; logo: string; url: (v: string) => string }[] = [
+  { key: 'twitter', label: 'Twitter', color: '1DA1F2', logo: 'twitter', url: (v) => profileUrl(v, 'https://twitter.com/') },
+  { key: 'linkedin', label: 'LinkedIn', color: '0077B5', logo: 'linkedin', url: (v) => profileUrl(v, 'https://linkedin.com/in/') },
+  { key: 'telegram', label: 'Telegram', color: '2CA5E0', logo: 'telegram', url: (v) => profileUrl(v, 'https://t.me/') },
+  { key: 'facebook', label: 'Facebook', color: '1877F2', logo: 'facebook', url: (v) => profileUrl(v, 'https://facebook.com/') },
+  { key: 'instagram', label: 'Instagram', color: 'E4405F', logo: 'instagram', url: (v) => profileUrl(v, 'https://instagram.com/') },
+  { key: 'youtube', label: 'YouTube', color: 'FF0000', logo: 'youtube', url: (v) => profileUrl(v, 'https://youtube.com/@') },
+  { key: 'website', label: 'Website', color: '7C5CFC', logo: 'googlechrome', url: websiteUrl },
+  { key: 'email', label: 'Email', color: 'D14836', logo: 'gmail', url: emailUrl },
+]
+
+/** Social links the user filled in, in display order, with invalid values skipped. */
+function socialLinks(data: ProfileData): { label: string; url: string; badge: string }[] {
+  return SOCIAL_LINKS.flatMap(({ key, label, color, logo, url }) => {
+    const href = url(data[key] ?? '')
+    return href
+      ? [{ label, url: href, badge: `https://img.shields.io/badge/${label}-${color}?style=for-the-badge&logo=${logo}&logoColor=white` }]
+      : []
+  })
+}
+
+function socialBadges(data: ProfileData): string[] {
+  return socialLinks(data).map(
+    (s) => `<a href="${escapeHtml(s.url)}" target="_blank"><img src="${s.badge}" alt="${s.label}" /></a>`
+  )
+}
+
+function hexColor(value: string, fallback: string): string {
+  const hex = value.trim().replace(/^#/, '')
+  return /^[\da-f]{6}$/i.test(hex) ? hex : fallback
 }
 
 export function generateReadme(data: ProfileData, hostUrl: string = 'https://github-readme-generator.vercel.app'): string {
   const lines: string[] = []
   const template = data.layoutTemplate || 'classic'
+  const siteUrl = httpUrl(hostUrl).replace(/\/$/, '')
+  const theme = THEMES.some((t) => t.value === data.theme) ? data.theme : 'radical'
+  const githubInput = cleanGithubUsername(data.github)
+  const github = isValidGithubUsername(githubInput) ? githubInput : ''
+  const statsUser = encodeURIComponent(github || 'OgabekHub')
+  const userPath = encodeURIComponent(github)
+  const name = safeText(data.name)
+  const title = safeText(data.title)
+  const capsuleColor = hexColor(data.capsuleColor || '', '7C5CFC')
+
+  const projectUrl = (projectName: string) =>
+    github ? markdownUrl(`https://github.com/${userPath}/${encodeURIComponent(projectName.trim())}`) : '#'
 
   // Capsule Render — TOP
   if (data.showCapsuleRender) {
-    const capsuleColor = data.capsuleColor || '7C5CFC'
     const capsuleType = template === 'cyberpunk' ? 'rect' : 'waving'
     lines.push(
-      `<p align="center"><img src="https://capsule-render.vercel.app/api?type=${capsuleType}&color=${capsuleColor.replace('#', '')}&height=120&section=header&text=${encodeURIComponent(data.name || 'Developer')}&fontSize=36&fontColor=ffffff&animation=fadeIn" alt="Header" width="100%"/></p>`
+      `<p align="center"><img src="https://capsule-render.vercel.app/api?type=${capsuleType}&color=${capsuleColor}&height=120&section=header&text=${encodeURIComponent(data.name.trim() || 'Developer')}&fontSize=36&fontColor=ffffff&animation=fadeIn" alt="Header" width="100%"/></p>`
     )
     lines.push('')
   }
 
   // Banner
-  if (data.showBanner) {
-    const bannerUrl = `${hostUrl}/api/banner?name=${encodeURIComponent(data.name || 'Developer')}&title=${encodeURIComponent(data.title || 'Full-Stack Developer')}&theme=${data.theme}`
+  if (data.showBanner && siteUrl) {
+    const bannerUrl = `${siteUrl}/api/banner?name=${encodeURIComponent(data.name.trim() || 'Developer')}&title=${encodeURIComponent(data.title.trim() || 'Full-Stack Developer')}&theme=${theme}`
     const align = template === 'minimalist' ? 'left' : 'center'
     lines.push(`<p align="${align}">`)
     lines.push(`  <img src="${bannerUrl}" alt="Banner" width="850"/>`)
@@ -222,87 +305,60 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
 
   // Header & Bio & Socials
   if (template === 'minimalist') {
-    lines.push(`# ${data.name || 'Your Name'}`)
-    if (data.title) {
-      lines.push(`> ${data.title}`)
+    lines.push(`# ${name || 'Your Name'}`)
+    if (title) {
+      lines.push(`> ${title}`)
       lines.push('')
     }
-    if (data.bio && !data.multilingualReadme) {
-      lines.push(data.bio)
+    if (data.bio.trim() && !data.multilingualReadme) {
+      lines.push(safeText(data.bio))
       lines.push('')
     }
-    
-    // Social Links
-    const socialLinks: string[] = []
-    if (data.twitter) socialLinks.push(`[Twitter](https://twitter.com/${data.twitter.replace('@', '')})`)
-    if (data.linkedin) socialLinks.push(`[LinkedIn](${data.linkedin.startsWith('http') ? data.linkedin : `https://linkedin.com/in/${data.linkedin}`})`)
-    if (data.telegram) socialLinks.push(`[Telegram](https://t.me/${data.telegram.replace('@', '')})`)
-    if (data.facebook) socialLinks.push(`[Facebook](${data.facebook.startsWith('http') ? data.facebook : `https://facebook.com/${data.facebook}`})`)
-    if (data.instagram) socialLinks.push(`[Instagram](https://instagram.com/${data.instagram.replace('@', '')})`)
-    if (data.youtube) socialLinks.push(`[YouTube](${data.youtube.startsWith('http') ? data.youtube : `https://youtube.com/${data.youtube}`})`)
-    if (data.website) socialLinks.push(`[Website](${data.website.startsWith('http') ? data.website : `https://${data.website}`})`)
-    if (data.email) socialLinks.push(`[Email](mailto:${data.email})`)
 
-    if (socialLinks.length > 0) {
-      lines.push(socialLinks.join(' • '))
+    // Social Links
+    const links = socialLinks(data).map((s) => `[${s.label}](${markdownUrl(s.url)})`)
+    if (links.length > 0) {
+      lines.push(links.join(' • '))
       lines.push('')
     }
   } else if (template === 'cyberpunk') {
-    lines.push(`# ─── ⚡ CORE_SYSTEM // ${(data.name || 'DEVELOPER').toUpperCase()} ⚡ ───`)
-    if (data.title) {
-      lines.push(`> **STATUS:** ${(data.title || 'ACTIVE_SYSTEM_OPERATOR').toUpperCase()}`)
+    lines.push(`# ─── ⚡ CORE_SYSTEM // ${safeText((data.name.trim() || 'DEVELOPER').toUpperCase())} ⚡ ───`)
+    if (title) {
+      lines.push(`> **STATUS:** ${safeText(data.title.toUpperCase())}`)
       lines.push('')
     }
-    if (data.bio && !data.multilingualReadme) {
+    if (data.bio.trim() && !data.multilingualReadme) {
+      // Code blocks are shown verbatim (no escaping) — only a ``` fence could break out of it
       lines.push('```')
-      lines.push(`[SYSTEM_INFO]: ${data.bio}`)
+      lines.push(`[SYSTEM_INFO]: ${data.bio.trim().replace(/`{3,}/g, '``')}`)
       lines.push('```')
       lines.push('')
     }
 
-    // Social badges
-    const socialBadges: string[] = []
-    if (data.twitter) socialBadges.push(SOCIAL_ICONS.twitter(data.twitter))
-    if (data.linkedin) socialBadges.push(SOCIAL_ICONS.linkedin(data.linkedin))
-    if (data.telegram) socialBadges.push(SOCIAL_ICONS.telegram(data.telegram))
-    if (data.facebook) socialBadges.push(SOCIAL_ICONS.facebook(data.facebook))
-    if (data.instagram) socialBadges.push(SOCIAL_ICONS.instagram(data.instagram))
-    if (data.youtube) socialBadges.push(SOCIAL_ICONS.youtube(data.youtube))
-    if (data.website) socialBadges.push(SOCIAL_ICONS.website(data.website))
-    if (data.email) socialBadges.push(SOCIAL_ICONS.email(data.email))
-
-    if (socialBadges.length > 0) {
+    const badges = socialBadges(data)
+    if (badges.length > 0) {
       lines.push('<p align="center">')
-      lines.push(`  ${socialBadges.join(' ')}`)
+      lines.push(`  ${badges.join(' ')}`)
       lines.push('</p>')
       lines.push('')
     }
   } else {
     // Classic (existing)
-    lines.push(`<h1 align="center">Hi 👋, I'm ${data.name || 'Your Name'}</h1>`)
-    if (data.title) {
-      lines.push(`<h3 align="center">${data.title}</h3>`)
+    lines.push(`<h1 align="center">Hi 👋, I'm ${name || 'Your Name'}</h1>`)
+    if (title) {
+      lines.push(`<h3 align="center">${title}</h3>`)
     }
     lines.push('')
 
-    if (data.bio && !data.multilingualReadme) {
-      lines.push(`<p align="center">${data.bio}</p>`)
+    if (data.bio.trim() && !data.multilingualReadme) {
+      lines.push(`<p align="center">${safeMultiline(data.bio)}</p>`)
       lines.push('')
     }
 
-    const socialBadges: string[] = []
-    if (data.twitter) socialBadges.push(SOCIAL_ICONS.twitter(data.twitter))
-    if (data.linkedin) socialBadges.push(SOCIAL_ICONS.linkedin(data.linkedin))
-    if (data.telegram) socialBadges.push(SOCIAL_ICONS.telegram(data.telegram))
-    if (data.facebook) socialBadges.push(SOCIAL_ICONS.facebook(data.facebook))
-    if (data.instagram) socialBadges.push(SOCIAL_ICONS.instagram(data.instagram))
-    if (data.youtube) socialBadges.push(SOCIAL_ICONS.youtube(data.youtube))
-    if (data.website) socialBadges.push(SOCIAL_ICONS.website(data.website))
-    if (data.email) socialBadges.push(SOCIAL_ICONS.email(data.email))
-
-    if (socialBadges.length > 0) {
+    const badges = socialBadges(data)
+    if (badges.length > 0) {
       lines.push('<p align="center">')
-      lines.push(`  ${socialBadges.join(' ')}`)
+      lines.push(`  ${badges.join(' ')}`)
       lines.push('</p>')
       lines.push('')
     }
@@ -329,10 +385,13 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push('---')
     }
     lines.push('')
-    if (data.location) lines.push(`- 📍 Based in **${data.location}**`)
-    if (data.funFact) lines.push(`- ⚡ Fun fact: ${data.funFact}`)
+    if (data.location.trim()) lines.push(`- 📍 Based in **${safeText(data.location)}**`)
+    if (data.funFact.trim()) lines.push(`- ⚡ Fun fact: ${safeText(data.funFact)}`)
     lines.push('')
   }
+
+  const projectLine = (proj: { name: string; description: string }, separator: string, placeholder: string) =>
+    `- **[${safeLinkText(proj.name)}](${projectUrl(proj.name)})** ${separator} ${safeText(proj.description) || placeholder}`
 
   // Multilingual README Tabs
   if (data.multilingualReadme) {
@@ -340,8 +399,8 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
     lines.push('<details open>')
     lines.push('  <summary>🇺🇿 O\'zbekcha</summary>')
     lines.push('  <br/>')
-    if (data.bio) {
-      lines.push(`  <p align="center">${data.bio}</p>`)
+    if (data.bio.trim()) {
+      lines.push(`  <p align="center">${safeMultiline(data.bio)}</p>`)
       lines.push('')
     }
     if (data.featuredProjects && data.featuredProjects.length > 0) {
@@ -349,8 +408,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push('')
       for (const proj of data.featuredProjects) {
         if (proj.name.trim()) {
-          const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
-          lines.push(`  - **[${proj.name}](${url})** — ${proj.description || 'loyiha tavsifi'}`)
+          lines.push(`  ${projectLine(proj, '—', 'loyiha tavsifi')}`)
         }
       }
       lines.push('')
@@ -362,8 +420,8 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
     lines.push('<details>')
     lines.push('  <summary>🇬🇧 English</summary>')
     lines.push('  <br/>')
-    if (data.bioEn || data.bio) {
-      lines.push(`  <p align="center">${data.bioEn || data.bio}</p>`)
+    if ((data.bioEn || data.bio).trim()) {
+      lines.push(`  <p align="center">${safeMultiline(data.bioEn || data.bio)}</p>`)
       lines.push('')
     }
     const enProjects = data.projectsEn && data.projectsEn.length > 0 ? data.projectsEn : data.featuredProjects
@@ -372,8 +430,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push('')
       for (const proj of enProjects) {
         if (proj.name.trim()) {
-          const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
-          lines.push(`  - **[${proj.name}](${url})** — ${proj.description || 'project description'}`)
+          lines.push(`  ${projectLine(proj, '—', 'project description')}`)
         }
       }
       lines.push('')
@@ -385,8 +442,8 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
     lines.push('<details>')
     lines.push('  <summary>🇷🇺 Русский</summary>')
     lines.push('  <br/>')
-    if (data.bioRu || data.bio) {
-      lines.push(`  <p align="center">${data.bioRu || data.bio}</p>`)
+    if ((data.bioRu || data.bio).trim()) {
+      lines.push(`  <p align="center">${safeMultiline(data.bioRu || data.bio)}</p>`)
       lines.push('')
     }
     const ruProjects = data.projectsRu && data.projectsRu.length > 0 ? data.projectsRu : data.featuredProjects
@@ -395,8 +452,7 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
       lines.push('')
       for (const proj of ruProjects) {
         if (proj.name.trim()) {
-          const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
-          lines.push(`  - **[${proj.name}](${url})** — ${proj.description || 'описание проекта'}`)
+          lines.push(`  ${projectLine(proj, '—', 'описание проекта')}`)
         }
       }
       lines.push('')
@@ -417,11 +473,10 @@ export function generateReadme(data: ProfileData, hostUrl: string = 'https://git
     lines.push('')
     for (const proj of data.featuredProjects) {
       if (proj.name.trim()) {
-        const url = data.github ? `https://github.com/${data.github}/${proj.name}` : '#'
         if (template === 'cyberpunk') {
-          lines.push(`- **[${proj.name}](${url})** » ${proj.description || 'mission objectives description'}`)
+          lines.push(projectLine(proj, '»', 'mission objectives description'))
         } else {
-          lines.push(`- **[${proj.name}](${url})** — ${proj.description || 'catchy project description'}`)
+          lines.push(projectLine(proj, '—', 'catchy project description'))
         }
       }
     }
@@ -444,8 +499,9 @@ const SKILL_CATEGORIES = {
   ]
 }
 
-  // Skills
-  if (data.skills.length > 0) {
+  // Skills — only known slugs ever reach the icon URLs
+  const skills = data.skills.filter((s) => SKILL_OPTIONS.includes(s))
+  if (skills.length > 0) {
     if (template === 'cyberpunk') {
       lines.push('### 🛠️ STACK_CAPABILITIES')
     } else if (template === 'minimalist') {
@@ -457,23 +513,23 @@ const SKILL_CATEGORIES = {
 
     if (template === 'minimalist') {
       if (data.categorizeSkills) {
-        const frontend = data.skills.filter(s => SKILL_CATEGORIES.frontend.includes(s))
-        const backend = data.skills.filter(s => SKILL_CATEGORIES.backend.includes(s))
-        const tools = data.skills.filter(s => SKILL_CATEGORIES.tools.includes(s))
+        const frontend = skills.filter(s => SKILL_CATEGORIES.frontend.includes(s))
+        const backend = skills.filter(s => SKILL_CATEGORIES.backend.includes(s))
+        const tools = skills.filter(s => SKILL_CATEGORIES.tools.includes(s))
 
         if (frontend.length > 0) lines.push(`- **Frontend**: ${frontend.join(', ')}`)
         if (backend.length > 0) lines.push(`- **Backend & Databases**: ${backend.join(', ')}`)
         if (tools.length > 0) lines.push(`- **DevOps, Mobile & Tools**: ${tools.join(', ')}`)
       } else {
-        lines.push(`**Skills**: ${data.skills.join(', ')}`)
+        lines.push(`**Skills**: ${skills.join(', ')}`)
       }
       lines.push('')
     } else {
       // Classic & Cyberpunk use icon badges
       if (data.categorizeSkills) {
-        const frontend = data.skills.filter(s => SKILL_CATEGORIES.frontend.includes(s))
-        const backend = data.skills.filter(s => SKILL_CATEGORIES.backend.includes(s))
-        const tools = data.skills.filter(s => SKILL_CATEGORIES.tools.includes(s))
+        const frontend = skills.filter(s => SKILL_CATEGORIES.frontend.includes(s))
+        const backend = skills.filter(s => SKILL_CATEGORIES.backend.includes(s))
+        const tools = skills.filter(s => SKILL_CATEGORIES.tools.includes(s))
 
         const align = template === 'cyberpunk' ? 'left' : 'center'
 
@@ -498,7 +554,7 @@ const SKILL_CATEGORIES = {
       } else {
         const align = template === 'cyberpunk' ? 'left' : 'center'
         lines.push(
-          `<p align="${align}">${data.skills
+          `<p align="${align}">${skills
             .map(
               (s) =>
                 `<img src="https://skillicons.dev/icons?i=${s}" alt="${s}" width="40" height="40"/>`
@@ -520,12 +576,12 @@ const SKILL_CATEGORIES = {
     lines.push('')
 
     const align = template === 'minimalist' ? 'left' : 'center'
-    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
+    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : theme
 
     // Determine stats server base URL
     const statsBaseUrl =
-      data.statsProvider === 'custom' && data.customStatsUrl
-        ? data.customStatsUrl.replace(/\/+$/, '')
+      data.statsProvider === 'custom' && httpUrl(data.customStatsUrl)
+        ? httpUrl(data.customStatsUrl).replace(/\/+$/, '')
         : data.statsProvider === 'official'
           ? 'https://github-readme-stats.vercel.app'
           : 'https://github-stats-extended.vercel.app'
@@ -552,14 +608,14 @@ const SKILL_CATEGORIES = {
     if (data.showStats) {
       lines.push(
         `<img src="${statsBaseUrl}/api?username=${
-          data.github || 'OgabekHub'
+          statsUser
         }&show_icons=true&hide_border=true&count_private=true${statsThemeParams}" alt="GitHub Stats" />`
       )
     }
     if (data.showStreak) {
       lines.push(
         `<img src="https://streak-stats.demolab.com/?user=${
-          data.github || 'OgabekHub'
+          statsUser
         }&hide_border=true${streakThemeParams}" alt="GitHub Streak" />`
       )
     }
@@ -571,7 +627,7 @@ const SKILL_CATEGORIES = {
       lines.push(`<p align="${align}">`)
       lines.push(
         `<img src="${statsBaseUrl}/api/top-langs/?username=${
-          data.github || 'OgabekHub'
+          statsUser
         }&layout=compact&hide_border=true${statsThemeParams}" alt="Top Languages"/>`
       )
       lines.push('</p>')
@@ -588,11 +644,11 @@ const SKILL_CATEGORIES = {
     }
     lines.push('')
     const align = template === 'minimalist' ? 'left' : 'center'
-    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
+    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : theme
     lines.push(`<p align="${align}">`)
     lines.push(
       `<img src="https://github-profile-trophy.vercel.app/?username=${
-        data.github || 'OgabekHub'
+        statsUser
       }&theme=${statsTheme}&no-frame=true&row=1&column=6" alt="Trophies"/>`
     )
     lines.push('</p>')
@@ -600,7 +656,7 @@ const SKILL_CATEGORIES = {
   }
 
   // Activity Graph
-  if (data.showActivityGraph && data.github) {
+  if (data.showActivityGraph && github) {
     const align = template === 'minimalist' ? 'left' : 'center'
     const graphTheme = template === 'cyberpunk' ? 'tokyo-night' : 'react-dark'
     if (template === 'cyberpunk') {
@@ -612,7 +668,7 @@ const SKILL_CATEGORIES = {
     lines.push(`<p align="${align}">`)
     lines.push(
       `<img src="https://github-readme-activity-graph.vercel.app/graph?username=${
-        data.github || 'OgabekHub'
+        statsUser
       }&theme=${graphTheme}&hide_border=true&area=true" alt="Contribution Graph" width="100%"/>`
     )
     lines.push('</p>')
@@ -620,9 +676,9 @@ const SKILL_CATEGORIES = {
   }
 
   // Profile Summary Cards
-  if (data.showSummaryCards && data.github) {
+  if (data.showSummaryCards && github) {
     const align = template === 'minimalist' ? 'left' : 'center'
-    const cardTheme = template === 'cyberpunk' ? 'dracula' : data.theme === 'radical' ? 'dracula' : (data.theme.startsWith('gradient_') ? 'dracula' : data.theme)
+    const cardTheme = template === 'cyberpunk' ? 'dracula' : theme === 'radical' ? 'dracula' : (theme.startsWith('gradient_') ? 'dracula' : theme)
     if (template === 'cyberpunk') {
       lines.push('### 🇧 PROFILE_SUMMARY_MATRIX')
     } else {
@@ -630,20 +686,20 @@ const SKILL_CATEGORIES = {
     }
     lines.push('')
     lines.push(`<p align="${align}">`)
-    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${data.github || 'OgabekHub'}&theme=${cardTheme}" alt="Profile Summary" width="100%"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=${statsUser}&theme=${cardTheme}" alt="Profile Summary" width="100%"/>`)
     lines.push('</p>')
     lines.push(`<p align="${align}">`)
-    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${data.github || 'OgabekHub'}&theme=${cardTheme}" alt="Repos Per Language"/>`)
-    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${data.github || 'OgabekHub'}&theme=${cardTheme}" alt="Most Commit Language"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=${statsUser}&theme=${cardTheme}" alt="Repos Per Language"/>`)
+    lines.push(`<img src="https://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=${statsUser}&theme=${cardTheme}" alt="Most Commit Language"/>`)
     lines.push('</p>')
     lines.push('')
   }
 
   // WakaTime Stats
   if (data.showWakatime) {
-    const wakaUser = data.wakatimeUsername || data.github || 'OgabekHub'
+    const wakaUser = encodeURIComponent(data.wakatimeUsername.trim()) || statsUser
     const align = template === 'minimalist' ? 'left' : 'center'
-    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : data.theme
+    const statsTheme = template === 'cyberpunk' ? 'tokyonight' : theme
     if (template === 'cyberpunk') {
       lines.push('### ⏱️ CODING_TIME_LOG')
     } else {
@@ -659,7 +715,7 @@ const SKILL_CATEGORIES = {
   }
 
   // 3D Contribution
-  if (data.show3dContrib && data.github) {
+  if (data.show3dContrib && github) {
     const align = template === 'minimalist' ? 'left' : 'center'
     if (template === 'cyberpunk') {
       lines.push('### 🌎 3D_CONTRIBUTION_MAP')
@@ -669,13 +725,13 @@ const SKILL_CATEGORIES = {
     lines.push('')
     lines.push('')
     lines.push(`<p align="${align}">`)
-    lines.push(`<img src="https://raw.githubusercontent.com/${data.github}/${data.github}/main/profile-3d-contrib/profile-night-rainbow.svg" alt="3D Contribution" width="100%"/>`)
+    lines.push(`<img src="https://raw.githubusercontent.com/${userPath}/${userPath}/main/profile-3d-contrib/profile-night-rainbow.svg" alt="3D Contribution" width="100%"/>`)
     lines.push('</p>')
     lines.push('')
   }
 
   // Snake Animation
-  if (data.showSnakeAnimation && data.github) {
+  if (data.showSnakeAnimation && github) {
     const align = template === 'minimalist' ? 'left' : 'center'
     if (template === 'cyberpunk') {
       lines.push('### 🐍 COMMIT_SNAKE_PROTOCOL')
@@ -685,13 +741,13 @@ const SKILL_CATEGORIES = {
     lines.push('')
     lines.push('')
     lines.push(`<p align="${align}">`)
-    lines.push(`<img src="https://raw.githubusercontent.com/${data.github}/${data.github}/output/github-contribution-grid-snake.svg" alt="Snake animation"/>`)
+    lines.push(`<img src="https://raw.githubusercontent.com/${userPath}/${userPath}/output/github-contribution-grid-snake.svg" alt="Snake animation"/>`)
     lines.push('</p>')
     lines.push('')
   }
 
   // Visitor badge + Committers rank
-  const showBadgeSection = (data.showVisitorBadge || data.showCommittersRank) && data.github
+  const showBadgeSection = (data.showVisitorBadge || data.showCommittersRank) && github
   if (showBadgeSection) {
     if (template === 'cyberpunk') {
       lines.push('// ──────────────────────────────────────────────')
@@ -704,12 +760,12 @@ const SKILL_CATEGORIES = {
     const badgeParts: string[] = []
     if (data.showVisitorBadge) {
       badgeParts.push(
-        `<img src="https://komarev.com/ghpvc/?username=${data.github}&label=Profile%20Views&color=${badgeColor}&style=for-the-badge" alt="Profile Views"/>`
+        `<img src="https://komarev.com/ghpvc/?username=${userPath}&label=Profile%20Views&color=${badgeColor}&style=for-the-badge" alt="Profile Views"/>`
       )
     }
     if (data.showCommittersRank) {
       badgeParts.push(
-        `<a href="https://committers.top/uzbekistan" target="_blank"><img src="https://user-badge.committers.top/uzbekistan/${data.github}.svg" alt="Uzbekistan GitHub Rank"/></a>`
+        `<a href="https://committers.top/uzbekistan" target="_blank"><img src="https://user-badge.committers.top/uzbekistan/${userPath}.svg" alt="Uzbekistan GitHub Rank"/></a>`
       )
     }
     lines.push(`<p align="${align}">${badgeParts.join(' ')}</p>`)
@@ -724,15 +780,14 @@ const SKILL_CATEGORIES = {
   } else {
     // Capsule Render — BOTTOM
     if (data.showCapsuleRender) {
-      const capsuleColor = data.capsuleColor || '7C5CFC'
       lines.push(
-        `<p align="center"><img src="https://capsule-render.vercel.app/api?type=waving&color=${capsuleColor.replace('#', '')}&height=80&section=footer" alt="Footer" width="100%"/></p>`
+        `<p align="center"><img src="https://capsule-render.vercel.app/api?type=waving&color=${capsuleColor}&height=80&section=footer" alt="Footer" width="100%"/></p>`
       )
       lines.push('')
     }
     lines.push('---')
     lines.push(
-      `<p align="center"><i>Generated with ❤️ using <a href="${hostUrl}" target="_blank">GitHub README Generator</a>. Star the repository on <a href="https://github.com/OgabekHub/github-readme-generator" target="_blank">GitHub</a>! ⭐</i></p>`
+      `<p align="center"><i>Generated with ❤️ using <a href="${escapeHtml(siteUrl || 'https://github.com/OgabekHub/github-readme-generator')}" target="_blank">GitHub README Generator</a>. Star the repository on <a href="https://github.com/OgabekHub/github-readme-generator" target="_blank">GitHub</a>! ⭐</i></p>`
     )
   }
 

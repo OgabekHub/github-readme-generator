@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isSameOrigin, TOKEN_COOKIE } from '@/lib/auth'
+
+const MAX_MARKDOWN_LENGTH = 200_000
 
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get('gh_token')?.value
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: 'Forbidden', code: 'forbidden' }, { status: 403 })
+  }
+
+  const token = req.cookies.get(TOKEN_COOKIE)?.value
   if (!token) {
-    return NextResponse.json({ error: 'Unauthorized. Please connect with GitHub first.' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Unauthorized. Please connect with GitHub first.', code: 'unauthorized' },
+      { status: 401 }
+    )
   }
 
-  let body: { markdown: string }
+  let markdown: unknown
   try {
-    body = await req.json()
+    markdown = (await req.json())?.markdown
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request body.', code: 'invalid_request' }, { status: 400 })
   }
 
-  const { markdown } = body
-  if (!markdown) {
-    return NextResponse.json({ error: 'Markdown content is required.' }, { status: 400 })
+  if (typeof markdown !== 'string' || !markdown.trim()) {
+    return NextResponse.json({ error: 'Markdown content is required.', code: 'markdown_required' }, { status: 400 })
+  }
+  if (markdown.length > MAX_MARKDOWN_LENGTH) {
+    return NextResponse.json({ error: 'README is too large.', code: 'markdown_too_large' }, { status: 413 })
   }
 
   try {
@@ -33,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userData = await userRes.json()
-    const username = userData.login
+    const username = encodeURIComponent(userData.login)
 
     // 2. Check if username/username repository exists
     const repoRes = await fetch(`https://api.github.com/repos/${username}/${username}`, {
@@ -54,7 +66,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: username,
+          name: userData.login,
           description: 'Personal profile README created using GitHub README Generator.',
           private: false,
           auto_init: true,
@@ -113,8 +125,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, url: `https://github.com/${username}/${username}` })
-  } catch (err: any) {
+  } catch (err) {
     console.error('[commit_api_error]', err)
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', code: 'commit_failed' }, { status: 500 })
   }
 }

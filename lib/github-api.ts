@@ -1,4 +1,8 @@
 import { SKILL_OPTIONS } from './readme-generator'
+import { githubApiHeaders } from './auth'
+import { readEnv } from './env'
+
+export { cleanGithubUsername, isValidGithubUsername } from './github-username'
 
 export interface GithubUser {
   login: string
@@ -25,13 +29,15 @@ export interface GithubSocialAccount {
   url: string
 }
 
+const REQUEST_TIMEOUT_MS = 10_000
+
 /** Optional GitHub token — increases rate limit from 60 → 5000 req/hour */
-function githubHeaders(): HeadersInit {
-  const token = process.env.GITHUB_TOKEN
-  return {
-    Accept: 'application/vnd.github.v3+json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
+function githubRequest(path: string): Promise<Response> {
+  return fetch(`https://api.github.com${path}`, {
+    headers: githubApiHeaders(readEnv('GITHUB_TOKEN')),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  })
 }
 
 export class RateLimitError extends Error {
@@ -41,73 +47,28 @@ export class RateLimitError extends Error {
   }
 }
 
-/**
- * Cleans a GitHub username input, extracting the raw username if a URL or @ prefix is provided.
- */
-export function cleanGithubUsername(input: string): string {
-  let cleaned = input.trim()
-
-  // Remove leading @ if present
-  if (cleaned.startsWith('@')) {
-    cleaned = cleaned.substring(1)
-  }
-
-  // If it's a URL or contains slashes
-  if (cleaned.includes('/') || cleaned.toLowerCase().includes('github.com')) {
-    try {
-      // Ensure it has a protocol for URL parsing
-      let urlString = cleaned
-      if (!/^https?:\/\//i.test(urlString)) {
-        urlString = 'https://' + urlString
-      }
-      const url = new URL(urlString)
-      if (url.hostname.toLowerCase().includes('github.com')) {
-        const segments = url.pathname.split('/').filter(Boolean)
-        if (segments.length > 0) {
-          cleaned = segments[0]
-        }
-      }
-    } catch {
-      // Fallback: split by slashes and get username
-      const parts = cleaned.split('/').filter(Boolean)
-      const githubIndex = parts.findIndex(p => p.toLowerCase().includes('github.com'))
-      if (githubIndex !== -1 && parts[githubIndex + 1]) {
-        cleaned = parts[githubIndex + 1]
-      } else {
-        cleaned = parts[parts.length - 1] || cleaned
-      }
-    }
-  }
-
-  // Strip query params/hash if they exist
-  cleaned = cleaned.split(/[?#]/)[0]
-
-  return cleaned.trim()
+function isRateLimited(res: Response): boolean {
+  return (
+    res.status === 429 ||
+    (res.status === 403 &&
+      (res.headers.get('x-ratelimit-remaining') === '0' || res.headers.has('retry-after')))
+  )
 }
 
+// All fetchers expect a username that already passed isValidGithubUsername.
+
 export async function fetchGithubUser(username: string): Promise<GithubUser> {
-  const cleaned = cleanGithubUsername(username)
-  const res = await fetch(`https://api.github.com/users/${cleaned}`, {
-    headers: githubHeaders(),
-    cache: 'no-store',
-  })
+  const res = await githubRequest(`/users/${encodeURIComponent(username)}`)
   if (res.status === 404) throw new Error('Not Found')
-  if (res.status === 403 || res.status === 429) throw new RateLimitError()
+  if (isRateLimited(res)) throw new RateLimitError()
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`)
   return res.json()
 }
 
 export async function fetchGithubRepos(username: string): Promise<GithubRepo[]> {
-  const cleaned = cleanGithubUsername(username)
-  const res = await fetch(
-    `https://api.github.com/users/${cleaned}/repos?sort=stars&per_page=30`,
-    {
-      headers: githubHeaders(),
-      cache: 'no-store',
-    }
-  )
+  const res = await githubRequest(`/users/${encodeURIComponent(username)}/repos?sort=stars&per_page=30`)
   if (res.status === 404) throw new Error('Not Found')
-  if (res.status === 403 || res.status === 429) throw new RateLimitError()
+  if (isRateLimited(res)) throw new RateLimitError()
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`)
   const repos: GithubRepo[] = await res.json()
   return repos.filter((r) => !r.fork)
@@ -115,11 +76,7 @@ export async function fetchGithubRepos(username: string): Promise<GithubRepo[]> 
 
 export async function fetchGithubSocials(username: string): Promise<GithubSocialAccount[]> {
   try {
-    const cleaned = cleanGithubUsername(username)
-    const res = await fetch(
-      `https://api.github.com/users/${cleaned}/social_accounts`,
-      { headers: githubHeaders(), cache: 'no-store' }
-    )
+    const res = await githubRequest(`/users/${encodeURIComponent(username)}/social_accounts`)
     if (!res.ok) return []
     return res.json()
   } catch {

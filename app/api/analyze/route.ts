@@ -7,13 +7,27 @@ import {
   detectSkills,
   RateLimitError,
   cleanGithubUsername,
+  isValidGithubUsername,
 } from '@/lib/github-api'
+import { clientIp, rateLimit } from '@/lib/rate-limit'
+import { readEnv } from '@/lib/env'
+
+const TONES = ['professional', 'minimalist', 'creative', 'hacker'] as const
+type Tone = (typeof TONES)[number]
+
+const MAX_INSTRUCTIONS_LENGTH = 300
+
+// Per IP: each analysis may call Gemini several times, so keep this tight
+const RATE_LIMIT = 8
+const RATE_WINDOW_MS = 10 * 60 * 1000
+
+function errorResponse(code: string, error: string, status: number, headers?: HeadersInit) {
+  return NextResponse.json({ error, code }, { status, headers })
+}
 
 /** Maps GitHub social provider names → our form field keys */
 function mapSocials(socials: { provider: string; url: string }[]) {
   const result: Record<string, string> = {}
-
-  console.log('[analyze] social_accounts raw:', JSON.stringify(socials))
 
   for (const { provider, url } of socials) {
     const p = provider.toLowerCase()
@@ -51,7 +65,6 @@ function mapSocials(socials: { provider: string; url: string }[]) {
     }
   }
 
-  console.log('[analyze] mapped socials:', JSON.stringify(result))
   return result
 }
 
@@ -67,67 +80,85 @@ function extractJson(text: string): string {
 }
 
 // ── Shared Gemini caller ────────────────────────────────
+// Stable pinned models first; the `-latest` aliases keep working after a pinned model is retired (404)
+const MODEL_NAMES = [
+  'gemini-2.5-flash',
+  'gemini-flash-latest',
+  'gemini-2.5-flash-lite',
+  'gemini-flash-lite-latest',
+]
+const MODEL_TIMEOUT_MS = 20_000
+
+const AI_FAILED_PREFIX = 'All models failed'
+
+/** 404 = model unavailable for this key, 429/5xx = overloaded or out of quota → try the next model. */
+function isRetryableModelError(e: unknown): boolean {
+  const status = (e as { status?: number } | null)?.status
+  return status === undefined || status === 404 || status === 429 || status >= 500
+}
+
 async function callGemini(apiKey: string, prompt: string, jsonMode: boolean = false): Promise<string> {
   const genAI = new GoogleGenerativeAI(apiKey)
-
-  // Models confirmed available — tries in order, uses first that works
-  const modelNames = [
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-flash-latest',       // Fallback to stable Gemini 1.5 Flash
-    'gemini-pro-latest',         // Fallback to Gemini 1.5 Pro
-    'gemini-2.5-pro',            // Fallback to Gemini 2.5 Pro
-  ]
-
   const errors: string[] = []
 
-  for (const modelName of modelNames) {
+  for (const modelName of MODEL_NAMES) {
     try {
-      const model = genAI.getGenerativeModel({ 
-        model: modelName,
-        generationConfig: jsonMode ? { responseMimeType: 'application/json' } : undefined
-      })
+      const model = genAI.getGenerativeModel(
+        {
+          model: modelName,
+          generationConfig: jsonMode ? { responseMimeType: 'application/json' } : undefined,
+        },
+        { timeout: MODEL_TIMEOUT_MS }
+      )
       const result = await model.generateContent(prompt)
       console.log(`[analyze] ✅ Model: ${modelName}`)
       return result.response.text().trim()
     } catch (e) {
-      const msg = e instanceof Error ? e.message.slice(0, 100) : String(e)
+      const status = (e as { status?: number } | null)?.status
+      const msg = `${status ?? 'network'} ${e instanceof Error ? e.message.slice(0, 160) : String(e)}`
       errors.push(`${modelName}: ${msg}`)
       console.warn(`[analyze] ❌ ${modelName}: ${msg}`)
+      // An invalid key or missing permission fails the same way for every model
+      if (!isRetryableModelError(e)) break
     }
   }
 
-  throw new Error(`All models failed:\n${errors.join('\n')}`)
+  throw new Error(`${AI_FAILED_PREFIX}:\n${errors.join('\n')}`)
 }
 
 // ── POST /api/analyze ───────────────────────────────────
 export async function POST(req: NextRequest) {
+  const limit = rateLimit(`analyze:${clientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!limit.ok) {
+    return errorResponse('too_many_requests', 'Too many requests — please try again later', 429, {
+      'Retry-After': String(limit.retryAfter),
+    })
+  }
+
   // Parse body
   let username: string
-  let tone = 'professional'
+  let tone: Tone = 'professional'
   let instructions = ''
   try {
     const body = await req.json()
-    username = cleanGithubUsername(body.username ?? '')
-    tone = (body.tone ?? 'professional').trim()
-    instructions = (body.instructions ?? '').trim()
+    username = cleanGithubUsername(String(body.username ?? ''))
+    if (TONES.includes(body.tone)) tone = body.tone
+    instructions = String(body.instructions ?? '').trim().slice(0, MAX_INSTRUCTIONS_LENGTH)
   } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    return errorResponse('invalid_request', 'Invalid request body', 400)
   }
 
   if (!username) {
-    return NextResponse.json({ error: 'GitHub username is required' }, { status: 400 })
+    return errorResponse('username_required', 'GitHub username is required', 400)
+  }
+  if (!isValidGithubUsername(username)) {
+    return errorResponse('invalid_username', 'Invalid GitHub username', 400)
   }
 
   // API key guard
-  const apiKey = process.env.GEMINI_API_KEY
+  const apiKey = readEnv('GEMINI_API_KEY')
   if (!apiKey) {
-    return NextResponse.json(
-      { error: 'AI service is not configured (missing GEMINI_API_KEY)' },
-      { status: 503 }
-    )
+    return errorResponse('ai_not_configured', 'AI service is not configured (missing GEMINI_API_KEY)', 503)
   }
 
   // ── Try full GitHub analysis ──────────────────────────
@@ -276,9 +307,10 @@ Return the result ONLY as a raw JSON object with the following structure (do not
           website: '',
         })
       } catch {
-        return NextResponse.json(
-          { error: 'GitHub rate limit reached. Wait ~1 hour or add GITHUB_TOKEN to .env.local' },
-          { status: 429 }
+        return errorResponse(
+          'github_rate_limited',
+          'GitHub rate limit reached. Wait ~1 hour or add GITHUB_TOKEN to .env.local',
+          429
         )
       }
     }
@@ -286,18 +318,13 @@ Return the result ONLY as a raw JSON object with the following structure (do not
     // ── GitHub user not found ──
     const msg = err instanceof Error ? err.message : String(err)
     if (msg === 'Not Found') {
-      return NextResponse.json(
-        { error: `GitHub user "${username}" not found` },
-        { status: 404 }
-      )
+      return errorResponse('user_not_found', `GitHub user "${username}" not found`, 404)
     }
 
     // ── Other errors ──
     console.error('[analyze error]', msg)
     const isDev = process.env.NODE_ENV === 'development'
-    return NextResponse.json(
-      { error: isDev ? `Debug: ${msg}` : 'Analysis failed — please try again' },
-      { status: 500 }
-    )
+    const code = msg.startsWith(AI_FAILED_PREFIX) ? 'ai_failed' : 'analysis_failed'
+    return errorResponse(code, isDev ? `Debug: ${msg}` : 'Analysis failed — please try again', code === 'ai_failed' ? 502 : 500)
   }
 }
