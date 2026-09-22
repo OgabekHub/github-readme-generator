@@ -159,40 +159,41 @@ export default function Home() {
   const demoUser = previewMarkdown !== markdown ? DEMO_USER : ''
 
   return (
-    <main className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 relative overflow-hidden">
+    <main className="min-h-screen lg:h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 relative overflow-clip">
       {/* Ambient background glows */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-[var(--glow-1)] blur-[120px] pointer-events-none -z-10" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[var(--glow-2)] blur-[120px] pointer-events-none -z-10" />
       
       {/* ── Header ─────────────────────────────────────── */}
-      <header className="sticky top-0 z-20 border-b border-[var(--border-input)] px-6 py-3.5 flex items-center justify-between bg-[var(--bg-main)]/90 backdrop-blur-md transition-colors duration-300">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-20 border-b border-[var(--border-input)] px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3 bg-surface/90 backdrop-blur-md transition-colors duration-300">
+        <div className="flex items-center gap-3 min-w-0">
           {/* Logo */}
           <img
             src="/logo.svg"
             alt="GitHub README Generator Logo"
             className="w-9 h-9 glow-pulse shrink-0 rounded-xl"
           />
-          <div>
-            <h1 className="text-sm font-bold leading-tight text-[var(--text-main)]">
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold leading-tight text-[var(--text-main)] truncate">
               {t.appTitle}
             </h1>
-            <p className="text-[11px] text-[var(--text-muted)] leading-none mt-0.5">
+            <p className="hidden sm:block text-[11px] text-[var(--text-muted)] leading-none mt-0.5">
               {t.appSubtitle}
             </p>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Theme Switcher */}
-          <ThemeToggle theme={theme} onChange={handleSetTheme} />
+          <ThemeToggle theme={theme} onChange={handleSetTheme} label={t.toggleTheme} />
 
           {/* Language Selector */}
           <div className="flex bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg p-0.5 transition-colors duration-300">
             {(['uz', 'en', 'ru'] as const).map((l) => (
               <button
                 key={l}
+                aria-pressed={lang === l}
                 onClick={() => handleSetLang(l)}
                 className={`px-2 py-1 text-[10px] font-bold rounded-md uppercase transition-all duration-150 ${
                   lang === l
@@ -213,10 +214,11 @@ export default function Home() {
             href="https://github.com/OgabekHub/github-readme-generator"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--bg-input)] hover:bg-[#7C5CFC]/10 border border-[var(--border-input)] hover:border-[#7C5CFC]/40 text-[var(--text-main)] transition-all duration-150 hover:shadow-[0_0_10px_rgba(124,92,252,0.15)] group shrink-0"
+            aria-label={t.starOnGithub}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--bg-input)] hover:bg-[#7C5CFC]/10 border border-[var(--border-input)] hover:border-[#7C5CFC]/40 text-[var(--text-main)] transition-all duration-150 hover:shadow-[0_0_10px_rgba(124,92,252,0.15)] group shrink-0"
           >
             <GithubIcon size={14} className="group-hover:rotate-[360deg] transition-transform duration-500 text-[var(--text-muted)] group-hover:text-[var(--text-main)]" />
-            <span>⭐ Star on GitHub</span>
+            <span className="hidden md:inline">{t.starOnGithub}</span>
           </a>
         </div>
       </header>
@@ -247,9 +249,9 @@ export default function Home() {
       )}
 
       {/* ── Body ───────────────────────────────────────── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)] lg:min-h-0">
         {/* Form panel */}
-        <div className="overflow-y-auto border-r border-[var(--border-input)] p-6 transition-colors duration-300">
+        <div className="lg:overflow-y-auto lg:border-r border-[var(--border-input)] p-6 transition-colors duration-300">
           <ProfileForm 
             data={data} 
             onChange={setData}
@@ -266,7 +268,7 @@ export default function Home() {
         </div>
 
         {/* Preview panel */}
-        <div className="overflow-hidden flex flex-col bg-[var(--bg-input)] transition-colors duration-300">
+        <div className="flex flex-col lg:min-h-0 border-t lg:border-t-0 border-[var(--border-input)] bg-[var(--bg-input)] transition-colors duration-300">
           {(data.showSnakeAnimation || data.show3dContrib) && hasOwnUsername && (
             <div className="bg-[#7C5CFC]/10 border-b border-[#7C5CFC]/30 px-5 py-4 text-xs text-[var(--text-main)] overflow-y-auto max-h-[40vh] shrink-0">
               <div className="flex gap-2">

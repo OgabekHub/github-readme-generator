@@ -157,6 +157,15 @@ body::after {
   animation-name: none !important;
 }
 
+/* ── Click sparks ────────────────────────────────────── */
+.click-spark {
+  mix-blend-mode: screen;
+}
+/* "screen" blending makes the sparks vanish on a light background */
+html.light .click-spark {
+  mix-blend-mode: normal;
+}
+
 /* ── Custom Skill Neon Glows ─────────────────────────── */
 .skill-glow-btn {
   position: relative;

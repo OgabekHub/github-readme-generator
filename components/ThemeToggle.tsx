@@ -5,9 +5,10 @@ import { Sun, Moon } from 'lucide-react'
 interface ThemeToggleProps {
   theme: 'light' | 'dark'
   onChange: (theme: 'light' | 'dark') => void
+  label: string
 }
 
-export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
+export default function ThemeToggle({ theme, onChange, label }: ThemeToggleProps) {
   const toggleTheme = (e: React.MouseEvent<HTMLButtonElement>) => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark'
 
@@ -58,10 +59,11 @@ export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label="Toggle theme"
-      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[#7C5CFC]/40 active:scale-90 transition-all duration-150 relative overflow-hidden group shadow-md"
+      aria-label={label}
+      title={label}
+      className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-[var(--bg-input)] border border-[var(--border-input)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[#7C5CFC]/40 active:scale-90 transition-all duration-150 relative overflow-hidden group shadow-md"
     >
-      <div className="relative w-4.5 h-4.5 transition-transform duration-500 group-hover:rotate-12">
+      <div className="relative w-[18px] h-[18px] transition-transform duration-500 group-hover:rotate-12">
         {theme === 'dark' ? (
           <Sun size={18} className="text-amber-400 transition-all duration-500 scale-100 rotate-0" />
         ) : (

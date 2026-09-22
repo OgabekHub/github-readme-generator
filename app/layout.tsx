@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
-import { Outfit } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 
-const outfit = Outfit({ subsets: ['latin'] })
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' })
+// Outfit has no Cyrillic glyphs — Inter is only downloaded when Russian text is shown
+const inter = Inter({ subsets: ['cyrillic'], variable: '--font-inter', preload: false })
+
+// Applies the saved theme/language before the first paint (no light-theme flash)
+const PREFERENCES_SCRIPT = `try{var t=localStorage.getItem('app_theme');if(t==='light'||t==='dark')document.documentElement.className=t;var l=localStorage.getItem('app_lang');if(l==='uz'||l==='en'||l==='ru')document.documentElement.lang=l}catch(e){}`
 
 // Public URL of the deployment (absolute links for Open Graph / Twitter cards)
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -35,8 +40,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={`${outfit.className} bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen flex flex-col transition-colors duration-300`}>
+    // The inline script may change class/lang before hydration
+    <html lang="uz" className="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: PREFERENCES_SCRIPT }} />
+      </head>
+      <body className={`${outfit.variable} ${inter.variable} font-sans bg-[var(--bg-main)] text-[var(--text-main)] min-h-screen flex flex-col transition-colors duration-300`}>
         {children}
       </body>
     </html>

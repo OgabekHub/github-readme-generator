@@ -13,6 +13,9 @@ interface Particle {
   decay: number
 }
 
+// Colors for the sparks (neon theme)
+const COLORS = ['#7C5CFC', '#a855f7', '#00f2fe', '#4facfe', '#00ff87', '#f39c12', '#ff007f']
+
 export default function ClickSpark() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const particlesRef = useRef<Particle[]>([])
@@ -24,16 +27,19 @@ export default function ClickSpark() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let animationId = 0
+
+    // Draw in device pixels so sparks stay crisp on HiDPI screens
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = window.innerWidth * dpr
+      canvas.height = window.innerHeight * dpr
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
     resizeCanvas()
     window.addEventListener('resize', resizeCanvas)
-
-    // Colors for the sparks (neon theme)
-    const colors = ['#7C5CFC', '#a855f7', '#00f2fe', '#4facfe', '#00ff87', '#f39c12', '#ff007f']
 
     const createSparks = (x: number, y: number) => {
       const particleCount = 12 + Math.floor(Math.random() * 8)
@@ -46,23 +52,15 @@ export default function ClickSpark() {
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed - 1, // slight upward bias
           size: 2 + Math.random() * 3,
-          color: colors[Math.floor(Math.random() * colors.length)],
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
           alpha: 1,
           decay: 0.015 + Math.random() * 0.02,
         })
       }
     }
 
-    const handleWindowClick = (e: MouseEvent) => {
-      createSparks(e.clientX, e.clientY)
-    }
-
-    window.addEventListener('click', handleWindowClick)
-
-    let animationId: number
-
     const tick = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
 
       const particles = particlesRef.current
       for (let i = particles.length - 1; i >= 0; i--) {
@@ -90,10 +88,17 @@ export default function ClickSpark() {
         ctx.restore()
       }
 
-      animationId = requestAnimationFrame(tick)
+      // Only keep the frame loop running while there is something to draw
+      animationId = particles.length > 0 ? requestAnimationFrame(tick) : 0
     }
 
-    tick()
+    const handleWindowClick = (e: MouseEvent) => {
+      if (reducedMotion.matches) return
+      createSparks(e.clientX, e.clientY)
+      if (!animationId) animationId = requestAnimationFrame(tick)
+    }
+
+    window.addEventListener('click', handleWindowClick)
 
     return () => {
       window.removeEventListener('resize', resizeCanvas)
@@ -105,8 +110,8 @@ export default function ClickSpark() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[9999]"
-      style={{ mixBlendMode: 'screen' }}
+      aria-hidden="true"
+      className="click-spark fixed inset-0 w-full h-full pointer-events-none z-[9999]"
     />
   )
 }

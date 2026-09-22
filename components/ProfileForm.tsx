@@ -12,6 +12,7 @@ import {
   usesGithubWidgets,
 } from '@/lib/readme-generator'
 import { THEMES } from '@/lib/themes'
+import Dropdown from '@/components/Dropdown'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
 import { TRANSLATIONS, translateError } from '@/lib/i18n'
 import { cleanGithubUsername, isValidGithubUsername } from '@/lib/github-username'
@@ -76,7 +77,7 @@ function Field({
       </span>
       <input
         {...props}
-        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
+        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
       />
     </label>
   )
@@ -96,18 +97,19 @@ export default function ProfileForm({
   onReset,
 }: FormProps) {
   const t = TRANSLATIONS[lang]
+  const layoutLabels: Record<string, string> = {
+    classic: t.layoutClassic,
+    minimalist: t.layoutMinimalist,
+    cyberpunk: t.layoutCyberpunk,
+  }
   const [analyzing, setAnalyzing] = useState(false)
   const [suggestion, setSuggestion] = useState<AISuggestion | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
-  const [themeOpen, setThemeOpen] = useState(false)
-  const [layoutDropdownOpen, setLayoutDropdownOpen] = useState(false)
   
   // AI Options state
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false)
   const [aiTone, setAiTone] = useState<'professional' | 'minimalist' | 'creative' | 'hacker'>('professional')
   const [aiInstructions, setAiInstructions] = useState('')
-  const [toneDropdownOpen, setToneDropdownOpen] = useState(false)
-  const [statsProviderOpen, setStatsProviderOpen] = useState(false)
   const [openSection, setOpenSection] = useState<string>('basic')
 
   const handleSectionToggle = (id: string) => {
@@ -254,7 +256,7 @@ export default function ProfileForm({
               value={data.bio}
               onChange={(e) => update('bio', e.target.value)}
               rows={2}
-              className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
+              className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
             />
           </label>
         ) : (
@@ -270,7 +272,7 @@ export default function ProfileForm({
                   value={data[tab.bio]}
                   onChange={(e) => update(tab.bio, e.target.value)}
                   rows={3}
-                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
                 />
               </label>
             ))}
@@ -317,13 +319,14 @@ export default function ProfileForm({
                 update('github', cleanGithubUsername(e.clipboardData.getData('text')))
               }}
               onBlur={(e) => update('github', cleanGithubUsername(e.target.value))}
-              className="flex-1 min-w-0 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
+              className="flex-1 min-w-0 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
             />
             <button
               type="button"
               onClick={handleAnalyze}
               disabled={!cleanedGithub || githubInvalid || analyzing}
-              title="Analyze GitHub profile with AI"
+              title={t.analyzeTitle}
+              aria-label={t.analyzeTitle}
               className="flex shrink-0 items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-[#7C5CFC] to-[#a855f7] text-white hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150 shadow-[0_0_14px_#7C5CFC44] hover:shadow-[0_0_20px_#7C5CFC66]"
             >
               {analyzing ? (
@@ -342,7 +345,7 @@ export default function ProfileForm({
         </div>
 
         {/* AI Options Toggle */}
-        <div className="border-t border-[var(--border-input)]/60 pt-3">
+        <div className="border-t border-line/60 pt-3">
           <button
             type="button"
             onClick={() => setAiSettingsOpen(!aiSettingsOpen)}
@@ -353,56 +356,20 @@ export default function ProfileForm({
           </button>
 
           {aiSettingsOpen && (
-            <div className="flex flex-col gap-3 mt-3 slide-down bg-[var(--bg-input)]/30 border border-[var(--border-input)]/50 p-3.5 rounded-xl">
+            <div className="flex flex-col gap-3 mt-3 slide-down bg-field/30 border border-line/50 p-3.5 rounded-xl">
               {/* Tone Selection */}
-              <div className="flex flex-col gap-1.5 relative">
-                <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                  {t.bioTone}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setToneDropdownOpen(!toneDropdownOpen)}
-                  className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
-                >
-                  <span>
-                    {aiTone === 'professional' && t.toneProfessional}
-                    {aiTone === 'minimalist' && t.toneMinimalist}
-                    {aiTone === 'creative' && t.toneCreative}
-                    {aiTone === 'hacker' && t.toneHacker}
-                  </span>
-                  <ChevronDown size={12} className={`text-[var(--text-muted)] transition-transform duration-200 ${toneDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {toneDropdownOpen && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setToneDropdownOpen(false)} />
-                    <div className="absolute top-[calc(100%+4px)] left-0 w-full z-40 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto backdrop-blur-md">
-                      {([
-                        { value: 'professional', label: t.toneProfessional },
-                        { value: 'minimalist', label: t.toneMinimalist },
-                        { value: 'creative', label: t.toneCreative },
-                        { value: 'hacker', label: t.toneHacker },
-                      ] as const).map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => {
-                            setAiTone(opt.value)
-                            setToneDropdownOpen(false)
-                          }}
-                          className={`w-full text-left px-3.5 py-1.5 text-xs transition-all duration-150 ${
-                            aiTone === opt.value
-                              ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
-                              : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+              <Dropdown
+                size="sm"
+                label={t.bioTone}
+                value={aiTone}
+                onChange={setAiTone}
+                options={[
+                  { value: 'professional', label: t.toneProfessional },
+                  { value: 'minimalist', label: t.toneMinimalist },
+                  { value: 'creative', label: t.toneCreative },
+                  { value: 'hacker', label: t.toneHacker },
+                ]}
+              />
 
               {/* Custom Instructions */}
               <div className="flex flex-col gap-1.5">
@@ -414,7 +381,7 @@ export default function ProfileForm({
                   value={aiInstructions}
                   onChange={(e) => setAiInstructions(e.target.value)}
                   rows={2}
-                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
                 />
               </div>
             </div>
@@ -422,7 +389,7 @@ export default function ProfileForm({
         </div>
 
         {/* Multilingual README Toggle */}
-        <label className="flex items-center gap-2 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
+        <label className="flex items-center gap-2 bg-field/50 border border-[var(--border-input)] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
           <input
             type="checkbox"
             checked={data.multilingualReadme}
@@ -545,13 +512,13 @@ export default function ProfileForm({
 
             {/* Suggested projects */}
             {cardProjects && cardProjects.length > 0 && (
-              <div className="flex flex-col gap-1.5 border-t border-[var(--border-input)]/40 pt-2.5">
+              <div className="flex flex-col gap-1.5 border-t border-line/40 pt-2.5">
                 <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide font-medium">
                   {t.suggestedProjects}
                 </span>
                 <div className="flex flex-col gap-1.5">
                   {cardProjects.map((p, idx) => (
-                    <div key={idx} className="bg-[var(--bg-input)]/50 border border-[var(--border-input)]/70 p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
+                    <div key={idx} className="bg-field/50 border border-line/70 p-2.5 rounded-xl text-xs flex flex-col gap-0.5">
                       <span className="font-semibold text-[var(--text-main)] flex items-center gap-1">
                         🚀 {p.name}
                       </span>
@@ -601,7 +568,7 @@ export default function ProfileForm({
           />
           <Field
             label={t.linkedin}
-            placeholder="username or full URL"
+            placeholder={t.usernameOrUrl}
             value={data.linkedin}
             onChange={(e) => update('linkedin', e.target.value)}
           />
@@ -613,13 +580,13 @@ export default function ProfileForm({
           />
           <Field
             label={t.youtube}
-            placeholder="channel URL or username"
+            placeholder={t.channelOrUsername}
             value={data.youtube}
             onChange={(e) => update('youtube', e.target.value)}
           />
           <Field
             label={t.facebook}
-            placeholder="username or full URL"
+            placeholder={t.usernameOrUrl}
             value={data.facebook}
             onChange={(e) => update('facebook', e.target.value)}
           />
@@ -657,12 +624,13 @@ export default function ProfileForm({
             {data.featuredProjects.map((project, idx) => (
                 <div
                   key={idx}
-                  className="flex flex-col gap-2.5 p-4 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-xl relative group"
+                  className="flex flex-col gap-2.5 p-4 bg-field/50 border border-[var(--border-input)] rounded-xl relative group"
                 >
                   <button
                     onClick={() => update('featuredProjects', data.featuredProjects.filter((_, i) => i !== idx))}
-                    className="absolute top-3 right-3 text-[var(--text-muted)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150 animate-fade-in"
-                    title="Remove project"
+                    className="absolute top-3 right-3 text-[var(--text-muted)] hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-150"
+                    title={t.removeProject}
+                    aria-label={t.removeProject}
                   >
                     <X size={14} />
                   </button>
@@ -678,7 +646,7 @@ export default function ProfileForm({
                         placeholder="e.g. github-readme-generator"
                         value={project.name}
                         onChange={(e) => updateProject(idx, { name: e.target.value })}
-                        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                        className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                       />
                     </div>
 
@@ -693,7 +661,7 @@ export default function ProfileForm({
                           placeholder={t.projectDescPlaceholder}
                           value={project.description}
                           onChange={(e) => updateProject(idx, { description: e.target.value })}
-                          className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                          className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                         />
                       </div>
                     ) : (
@@ -707,7 +675,7 @@ export default function ProfileForm({
                             placeholder={project.description.trim() || t.projectDescPlaceholder}
                             value={project[tab.description] ?? ''}
                             onChange={(e) => updateProject(idx, { [tab.description]: e.target.value })}
-                            className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
+                            className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50"
                           />
                         </div>
                       ))
@@ -759,10 +727,11 @@ export default function ProfileForm({
                 key={skill}
                 onClick={() => toggleSkill(skill)}
                 title={skill}
+                aria-pressed={active}
                 className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border skill-glow-btn active:scale-95 transition-all duration-200 ${
                   active
-                    ? 'bg-[var(--glow-color)]/10 text-[var(--text-main)]'
-                    : 'bg-[var(--bg-input)]/50 border-[var(--border-input)] hover:bg-[#7C5CFC]/5'
+                    ? 'bg-glow/10 text-[var(--text-main)]'
+                    : 'bg-field/50 border-[var(--border-input)] hover:bg-[#7C5CFC]/5'
                 }`}
                 style={{
                   '--glow-color': glowColor,
@@ -798,120 +767,18 @@ export default function ProfileForm({
 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {/* Theme Dropdown */}
-          <div className="flex flex-col gap-1.5 relative">
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-              {t.theme}
-            </span>
-            
-            {/* Custom Select Trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                setThemeOpen(!themeOpen)
-                setLayoutDropdownOpen(false)
-              }}
-              className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
-            >
-              <span>{THEMES.find((t) => t.value === data.theme)?.label || data.theme}</span>
-              <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${themeOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Custom Select Options Dropdown */}
-            {themeOpen && (
-              <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setThemeOpen(false)}
-                />
-                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
-                  {THEMES.map((t) => {
-                    const isSelected = t.value === data.theme
-                    return (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => {
-                          update('theme', t.value)
-                          setThemeOpen(false)
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
-                            : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
-                        }`}
-                      >
-                        <span>{t.label}</span>
-                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Layout Dropdown */}
-          <div className="flex flex-col gap-1.5 relative">
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-              {t.layout}
-            </span>
-            
-            {/* Custom Select Trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                setLayoutDropdownOpen(!layoutDropdownOpen)
-                setThemeOpen(false)
-              }}
-              className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
-            >
-              <span>
-                {data.layoutTemplate === 'classic' ? t.layoutClassic :
-                 data.layoutTemplate === 'minimalist' ? t.layoutMinimalist :
-                 data.layoutTemplate === 'cyberpunk' ? t.layoutCyberpunk : t.layoutClassic}
-              </span>
-              <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${layoutDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Custom Select Options Dropdown */}
-            {layoutDropdownOpen && (
-              <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setLayoutDropdownOpen(false)}
-                />
-                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
-                  {LAYOUT_TEMPLATES.map((tmpl) => {
-                    const isSelected = tmpl.value === data.layoutTemplate
-                    const label = tmpl.value === 'classic' ? t.layoutClassic :
-                                  tmpl.value === 'minimalist' ? t.layoutMinimalist :
-                                  tmpl.value === 'cyberpunk' ? t.layoutCyberpunk : tmpl.label
-                    return (
-                      <button
-                        key={tmpl.value}
-                        type="button"
-                        onClick={() => {
-                          update('layoutTemplate', tmpl.value)
-                          setLayoutDropdownOpen(false)
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
-                            : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
-                        }`}
-                      >
-                        <span>{label}</span>
-                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          <Dropdown
+            label={t.theme}
+            value={data.theme}
+            onChange={(theme) => update('theme', theme)}
+            options={THEMES}
+          />
+          <Dropdown
+            label={t.layout}
+            value={data.layoutTemplate}
+            onChange={(layout) => update('layoutTemplate', layout)}
+            options={LAYOUT_TEMPLATES.map((tmpl) => ({ value: tmpl.value, label: layoutLabels[tmpl.value] ?? tmpl.label }))}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -933,7 +800,7 @@ export default function ProfileForm({
           ].map((item) => (
             <label
               key={item.key}
-              className="flex items-center gap-2 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
+              className="flex items-center gap-2 bg-field/50 border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
             >
               <input
                 type="checkbox"
@@ -948,7 +815,7 @@ export default function ProfileForm({
 
         {/* Capsule color picker */}
         {data.showCapsuleRender && (
-          <div className="flex items-center gap-3 bg-[var(--bg-input)]/50 border border-[var(--border-input)] rounded-lg px-3 py-2">
+          <div className="flex items-center gap-3 bg-field/50 border border-[var(--border-input)] rounded-lg px-3 py-2">
             <span className="text-xs text-[var(--text-muted)] shrink-0">{t.capsuleColorLabel}</span>
             <input
               type="color"
@@ -989,72 +856,23 @@ export default function ProfileForm({
               placeholder={t.wakatimePlaceholder}
               className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#7C5CFC]/60"
             />
-            <p className="text-xs text-amber-400">⚠️ WakaTime akkaunt va VS Code extension kerak</p>
+            <p className="text-xs text-amber-400">{t.wakatimeHint}</p>
           </div>
         )}
 
         {/* Stats Provider Selector — shown when stats or top langs are enabled */}
         {(data.showStats || data.showTopLangs) && (
-          <div className="flex flex-col gap-1.5 relative">
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-              {t.statsProviderLabel}
-            </span>
-
-            {/* Custom Select Trigger */}
-            <button
-              type="button"
-              onClick={() => {
-                setStatsProviderOpen(!statsProviderOpen)
-                setThemeOpen(false)
-                setLayoutDropdownOpen(false)
-              }}
-              className="flex items-center justify-between w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] hover:border-[#7C5CFC]/60 transition-all duration-150 text-left focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50"
-            >
-              <span>
-                {data.statsProvider === 'official' ? t.statsProviderOfficial :
-                 data.statsProvider === 'custom' ? t.statsProviderCustom :
-                 t.statsProviderExtended}
-              </span>
-              <ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${statsProviderOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Custom Select Options Dropdown */}
-            {statsProviderOpen && (
-              <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setStatsProviderOpen(false)}
-                />
-                <div className="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] py-1.5 max-h-56 overflow-y-auto backdrop-blur-md slide-down">
-                  {[
-                    { value: 'extended' as const, label: t.statsProviderExtended },
-                    { value: 'official' as const, label: t.statsProviderOfficial },
-                    { value: 'custom' as const, label: t.statsProviderCustom },
-                  ].map((opt) => {
-                    const isSelected = opt.value === data.statsProvider
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          update('statsProvider', opt.value)
-                          setStatsProviderOpen(false)
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-all duration-150 flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#7C5CFC]/15 text-[var(--text-accent)] font-semibold'
-                            : 'text-[var(--text-light)] hover:bg-[#7C5CFC]/10 hover:text-[var(--text-main)]'
-                        }`}
-                      >
-                        <span>{opt.label}</span>
-                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />}
-                      </button>
-                    )
-                  })}
-                </div>
-              </>
-            )}
+          <div className="flex flex-col gap-1.5">
+            <Dropdown
+              label={t.statsProviderLabel}
+              value={data.statsProvider}
+              onChange={(provider) => update('statsProvider', provider)}
+              options={[
+                { value: 'extended', label: t.statsProviderExtended },
+                { value: 'official', label: t.statsProviderOfficial },
+                { value: 'custom', label: t.statsProviderCustom },
+              ]}
+            />
 
             {/* Custom URL input */}
             {data.statsProvider === 'custom' && (
@@ -1067,7 +885,7 @@ export default function ProfileForm({
                   value={data.customStatsUrl}
                   onChange={(e) => update('customStatsUrl', e.target.value)}
                   placeholder={t.customStatsUrlPlaceholder}
-                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)]/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
                 />
               </label>
             )}
@@ -1090,7 +908,7 @@ export default function ProfileForm({
       </AccordionSection>
 
       {/* ── GitHub Publish / Deploy ─────────────────────── */}
-      <AccordionSection id="extras" title={<>🚀 {t.commitToProfile.split(' ')[0]} Publish</>} isOpen={openSection === "extras"} onToggle={handleSectionToggle}>
+      <AccordionSection id="extras" title={t.publishTitle} isOpen={openSection === "extras"} onToggle={handleSectionToggle}>
         <div className="flex flex-col gap-4 relative">
           <div className="flex justify-end mb-2">
           {session.loggedIn && (
@@ -1118,7 +936,7 @@ export default function ProfileForm({
         ) : (
           <div className="flex flex-col gap-4">
             {/* User header */}
-            <div className="flex items-center gap-3 bg-[var(--bg-input)]/50 border border-[var(--border-input)] p-3 rounded-xl">
+            <div className="flex items-center gap-3 bg-field/50 border border-[var(--border-input)] p-3 rounded-xl">
               <img
                 src={session.avatarUrl}
                 alt={session.username}
@@ -1131,7 +949,7 @@ export default function ProfileForm({
                 <span className="text-[10px] text-[var(--text-muted)]">@{session.username}</span>
               </div>
               <span className="ml-auto text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-medium">
-                Connected
+                {t.connected}
               </span>
             </div>
 
@@ -1217,7 +1035,7 @@ export default function ProfileForm({
                       className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C5CFC] hover:bg-[#a78bfa] text-white text-[11px] font-semibold transition-all duration-150 self-start shadow-[0_0_10px_#7C5CFC33] hover:shadow-[0_0_14px_#7C5CFC55] active:scale-95"
                     >
                       <Sparkles size={11} className="text-yellow-300 animate-pulse" />
-                      <span>⭐ Star us on GitHub</span>
+                      <span>{t.starUs}</span>
                     </a>
                   </div>
                 </div>
@@ -1258,7 +1076,10 @@ function AccordionSection({
     <div className={`relative bg-[var(--bg-card)] border rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
       isOpen ? 'z-50 border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'z-10 border-[var(--border-card)] hover:border-[#7C5CFC]/30'
     }`}>
-      <button 
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={`section-${id}`}
         onClick={() => onToggle(id)}
         className="w-full flex items-center justify-between p-5 focus:outline-none transition-colors hover:bg-[#7C5CFC]/5"
       >
@@ -1280,6 +1101,7 @@ function AccordionSection({
         {isOpen && (
           <motion.div
             key="content"
+            id={`section-${id}`}
             initial="collapsed"
             animate="open"
             exit="collapsed"
