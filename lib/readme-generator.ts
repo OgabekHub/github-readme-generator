@@ -114,12 +114,10 @@ export const SKILL_COLORS: Record<string, string> = {
   github: '#7c5cfc',
   figma: '#f24e1e',
   graphql: '#e10098',
-  flutter: '#02569b',
   kotlin: '#7f52ff',
   swift: '#f05138',
   cpp: '#00599c',
   cs: '#239120',
-  dotnet: '#512bd4',
   // Newly added skills:
   bootstrap: '#9061f9', // Bright Purple
   vite: '#646cff',
