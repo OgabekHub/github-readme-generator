@@ -180,7 +180,7 @@ export default function Home() {
           <img
             src="/logo.svg"
             alt="GitHub README Generator Logo"
-            className="w-9 h-9 glow-pulse shrink-0 rounded-xl"
+            className="w-9 h-9 glow-pulse shrink-0 rounded-[9px]"
           />
           <div className="min-w-0">
             <h1 className="text-[13px] sm:text-sm font-bold leading-tight text-[var(--text-main)] line-clamp-2">
