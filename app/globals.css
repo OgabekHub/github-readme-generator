@@ -95,6 +95,28 @@ body::after {
   100% { transform: translate(-50px, 100px) scale(0.9); }
 }
 
+/* Moving 600px blurred layers cost a lot of GPU time on phones — keep them still there */
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-pulse {
+    animation: none;
+  }
+}
+
+/* iOS Safari zooms into any field with a font size under 16px when it gets focus */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='color']),
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* ── Scrollbar ───────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
@@ -151,19 +173,34 @@ body::after {
 
 /* Disable all CSS transitions/animations when theme-switching class is active on root */
 .theme-switching,
-.theme-switching * {
+.theme-switching *:not(.click-ripple) {
   transition: none !important;
   animation-duration: 0s !important;
   animation-name: none !important;
 }
 
-/* ── Click sparks ────────────────────────────────────── */
-.click-spark {
-  mix-blend-mode: screen;
+/* ── Click feedback: a small ring that fades out (see ClickRipple) ── */
+.click-ripple {
+  position: fixed;
+  z-index: 9999;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border: 2px solid var(--accent);
+  border-radius: 9999px;
+  pointer-events: none;
+  animation: clickRipple 0.4s ease-out forwards;
 }
-/* "screen" blending makes the sparks vanish on a light background */
-html.light .click-spark {
-  mix-blend-mode: normal;
+
+@keyframes clickRipple {
+  from {
+    transform: scale(0.3);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.3);
+    opacity: 0;
+  }
 }
 
 /* ── Custom Skill Neon Glows ─────────────────────────── */

@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FeaturedProject,
+  isValidEmail,
+  isValidWebsite,
   LAYOUT_TEMPLATES,
   MAX_PROJECTS,
   ProfileData,
@@ -13,7 +15,7 @@ import {
 } from '@/lib/readme-generator'
 import { THEMES } from '@/lib/themes'
 import Dropdown from '@/components/Dropdown'
-import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
+import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown, Search } from 'lucide-react'
 import { TRANSLATIONS, translateError } from '@/lib/i18n'
 import { cleanGithubUsername, isValidGithubUsername } from '@/lib/github-username'
 
@@ -39,6 +41,17 @@ interface FormProps {
   bannerUnavailable?: boolean
   onReset: () => void
 }
+
+const LINK_KEYS = ['email', 'telegram', 'twitter', 'linkedin', 'instagram', 'youtube', 'facebook', 'website'] as const
+
+type WidgetKey = {
+  [K in keyof ProfileData]: K extends `show${string}` ? K : never
+}[keyof ProfileData]
+
+const WIDGET_KEYS: WidgetKey[] = [
+  'showBanner', 'showCapsuleRender', 'showTypingSvg', 'showStats', 'showStreak', 'showTopLangs', 'showTrophies',
+  'showSummaryCards', 'showActivityGraph', 'show3dContrib', 'showSnakeAnimation', 'showWakatime', 'showVisitorBadge', 'showCommittersRank',
+]
 
 const LANGUAGE_TABS = [
   { bio: 'bioUz', description: 'descriptionUz', name: 'O\'zbekcha' },
@@ -68,8 +81,9 @@ interface AISuggestion {
 /* ── Reusable text input ──────────────────────────────── */
 function Field({
   label,
+  hint,
   ...props
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+}: { label: string; hint?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
@@ -77,8 +91,10 @@ function Field({
       </span>
       <input
         {...props}
+        aria-invalid={hint ? true : undefined}
         className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC] focus:border-transparent transition-all duration-150"
       />
+      {hint && <span className="text-[11px] text-amber-400">{hint}</span>}
     </label>
   )
 }
@@ -111,6 +127,8 @@ export default function ProfileForm({
   const [aiTone, setAiTone] = useState<'professional' | 'minimalist' | 'creative' | 'hacker'>('professional')
   const [aiInstructions, setAiInstructions] = useState('')
   const [openSection, setOpenSection] = useState<string>('basic')
+  const [skillQuery, setSkillQuery] = useState('')
+  const visibleSkills = SKILL_OPTIONS.filter((skill) => skill.includes(skillQuery.trim().toLowerCase()))
 
   const handleSectionToggle = (id: string) => {
     setOpenSection(prev => prev === id ? '' : id)
@@ -131,6 +149,9 @@ export default function ProfileForm({
   const usernameMismatch =
     !!session.username && isValidGithubUsername(cleanedGithub) &&
     cleanedGithub.toLowerCase() !== session.username.toLowerCase()
+
+  const count = (n: number) => (n > 0 ? String(n) : undefined)
+  const filledLinks = LINK_KEYS.filter((key) => data[key].trim()).length
 
   function update<K extends keyof ProfileData>(key: K, value: ProfileData[K]) {
     onChange({ ...data, [key]: value })
@@ -222,85 +243,23 @@ export default function ProfileForm({
         <button
           type="button"
           onClick={onReset}
-          className="text-[11px] text-[var(--text-muted)] hover:text-red-400 transition-colors"
+          className="px-2 py-1.5 -mr-2 text-[11px] text-[var(--text-muted)] hover:text-red-400 transition-colors"
         >
           {t.resetForm}
         </button>
       </div>
 
-      {/* ── Basic Info ────────────────────────────────── */}
-      <AccordionSection id="basic" title={t.basicInfo} isOpen={openSection === "basic"} onToggle={handleSectionToggle}>
-        <div className="flex flex-col gap-4 relative">
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field
-            label={t.name}
-            placeholder="Og'abek"
-            value={data.name}
-            onChange={(e) => update('name', e.target.value)}
-          />
-          <Field
-            label={t.title}
-            placeholder="Full-Stack Developer"
-            value={data.title}
-            onChange={(e) => update('title', e.target.value)}
-          />
+      {/* ── Quick start: GitHub username + AI analysis ───── */}
+      <section
+        aria-labelledby="quick-start-title"
+        className="relative flex flex-col gap-4 bg-[var(--bg-card)] border border-[#7C5CFC]/40 rounded-2xl p-5 shadow-[0_0_24px_rgba(124,92,252,0.12)] lg:backdrop-blur-sm"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 id="quick-start-title" className="flex items-center gap-2 text-sm font-bold text-[var(--text-main)]">
+            <Sparkles size={16} className="text-[#a855f7]" /> {t.quickStartTitle}
+          </h2>
+          <p className="text-xs text-[var(--text-muted)] leading-relaxed">{t.quickStartHint}</p>
         </div>
-        {!data.multilingualReadme ? (
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-              {t.bio}
-            </span>
-            <textarea
-              placeholder={t.bioPlaceholder}
-              value={data.bio}
-              onChange={(e) => update('bio', e.target.value)}
-              rows={2}
-              className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
-            />
-          </label>
-        ) : (
-          // Each tab falls back to the main bio, which is shown as the placeholder
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 slide-down">
-            {LANGUAGE_TABS.map((tab) => (
-              <label key={tab.bio} className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-                  {t.bioFor.replace('{lang}', tab.name)}
-                </span>
-                <textarea
-                  placeholder={data.bio.trim() || t.bioPlaceholder}
-                  value={data[tab.bio]}
-                  onChange={(e) => update(tab.bio, e.target.value)}
-                  rows={3}
-                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
-                />
-              </label>
-            ))}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field
-            label={t.location}
-            placeholder={t.locationPlaceholder}
-            value={data.location}
-            onChange={(e) => update('location', e.target.value)}
-          />
-          <Field
-            label={t.funFact}
-            placeholder={t.funFactPlaceholder}
-            value={data.funFact}
-            onChange={(e) => update('funFact', e.target.value)}
-          />
-        </div>
-      
-        </div>
-      </AccordionSection>
-
-      {/* ── Social Links ──────────────────────────────── */}
-      <AccordionSection id="socials" title={t.linksAndAi} isOpen={openSection === "socials"} onToggle={handleSectionToggle}>
-        <div className="flex flex-col gap-4 relative">
-
 
         {/* GitHub + AI button row */}
         <div className="flex flex-col gap-1.5">
@@ -387,17 +346,6 @@ export default function ProfileForm({
             </div>
           )}
         </div>
-
-        {/* Multilingual README Toggle */}
-        <label className="flex items-center gap-2 bg-field/50 border border-[var(--border-input)] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
-          <input
-            type="checkbox"
-            checked={data.multilingualReadme}
-            onChange={(e) => update('multilingualReadme', e.target.checked)}
-            className="accent-[#7C5CFC] w-4 h-4 shrink-0"
-          />
-          <span className="text-[var(--text-light)] text-xs font-semibold">{t.multilingualReadmeToggle}</span>
-        </label>
 
         {/* AI error */}
         {aiError && (
@@ -546,11 +494,98 @@ export default function ProfileForm({
             </div>
           </div>
         )}
+      </section>
+
+      {/* ── Basic Info ────────────────────────────────── */}
+      <AccordionSection id="basic" step={1} summary={data.name.trim() ? '✓' : undefined} title={t.basicInfo} isOpen={openSection === "basic"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field
+            label={t.name}
+            placeholder="Og'abek"
+            value={data.name}
+            onChange={(e) => update('name', e.target.value)}
+          />
+          <Field
+            label={t.title}
+            placeholder="Full-Stack Developer"
+            value={data.title}
+            onChange={(e) => update('title', e.target.value)}
+          />
+        </div>
+        {/* Multilingual README Toggle */}
+        <label className="flex items-center gap-2 bg-field/50 border border-[var(--border-input)] rounded-xl px-4 py-2.5 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none">
+          <input
+            type="checkbox"
+            checked={data.multilingualReadme}
+            onChange={(e) => update('multilingualReadme', e.target.checked)}
+            className="accent-[#7C5CFC] w-4 h-4 shrink-0"
+          />
+          <span className="text-[var(--text-light)] text-xs font-semibold">{t.multilingualReadmeToggle}</span>
+        </label>
+
+        {!data.multilingualReadme ? (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t.bio}
+            </span>
+            <textarea
+              placeholder={t.bioPlaceholder}
+              value={data.bio}
+              onChange={(e) => update('bio', e.target.value)}
+              rows={2}
+              className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150 resize-none"
+            />
+          </label>
+        ) : (
+          // Each tab falls back to the main bio, which is shown as the placeholder
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 slide-down">
+            {LANGUAGE_TABS.map((tab) => (
+              <label key={tab.bio} className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+                  {t.bioFor.replace('{lang}', tab.name)}
+                </span>
+                <textarea
+                  placeholder={data.bio.trim() || t.bioPlaceholder}
+                  value={data[tab.bio]}
+                  onChange={(e) => update(tab.bio, e.target.value)}
+                  rows={3}
+                  className="bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]/50 resize-none"
+                />
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field
+            label={t.location}
+            placeholder={t.locationPlaceholder}
+            value={data.location}
+            onChange={(e) => update('location', e.target.value)}
+          />
+          <Field
+            label={t.funFact}
+            placeholder={t.funFactPlaceholder}
+            value={data.funFact}
+            onChange={(e) => update('funFact', e.target.value)}
+          />
+        </div>
+      
+        </div>
+      </AccordionSection>
+
+      {/* ── Social Links ──────────────────────────────── */}
+      <AccordionSection id="socials" step={2} summary={count(filledLinks)} title={t.links} isOpen={openSection === "socials"} onToggle={handleSectionToggle}>
+        <div className="flex flex-col gap-4 relative">
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field
             label={t.email}
             placeholder="you@example.com"
+            hint={data.email.trim() && !isValidEmail(data.email) ? t.invalidEmail : undefined}
             value={data.email}
             onChange={(e) => update('email', e.target.value)}
           />
@@ -593,6 +628,7 @@ export default function ProfileForm({
           <Field
             label={t.website}
             placeholder="yoursite.com"
+            hint={data.website.trim() && !isValidWebsite(data.website) ? t.invalidWebsite : undefined}
             value={data.website}
             onChange={(e) => update('website', e.target.value)}
           />
@@ -602,7 +638,7 @@ export default function ProfileForm({
       </AccordionSection>
 
       {/* ── Featured Projects ──────────────────────────── */}
-      <AccordionSection id="projects" title={t.featuredProjects} isOpen={openSection === "projects"} onToggle={handleSectionToggle}>
+      <AccordionSection id="projects" step={3} summary={count(data.featuredProjects.filter((p) => p.name.trim()).length)} title={t.featuredProjects} isOpen={openSection === "projects"} onToggle={handleSectionToggle}>
         <div className="flex flex-col gap-4 relative">
           <div className="flex justify-end mb-2">
           {data.featuredProjects.length < MAX_PROJECTS && (
@@ -628,7 +664,7 @@ export default function ProfileForm({
                 >
                   <button
                     onClick={() => update('featuredProjects', data.featuredProjects.filter((_, i) => i !== idx))}
-                    className="absolute top-3 right-3 text-[var(--text-muted)] hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-150"
+                    className="absolute top-2 right-2 p-1.5 rounded-md text-[var(--text-muted)] hover:text-red-400 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-150"
                     title={t.removeProject}
                     aria-label={t.removeProject}
                   >
@@ -690,7 +726,7 @@ export default function ProfileForm({
       </AccordionSection>
 
       {/* ── Tech Stack ────────────────────────────────── */}
-      <AccordionSection id="tech" title={t.techStack} isOpen={openSection === "tech"} onToggle={handleSectionToggle}>
+      <AccordionSection id="tech" step={4} summary={count(data.skills.length)} title={t.techStack} isOpen={openSection === "tech"} onToggle={handleSectionToggle}>
         <div className="flex flex-col gap-4 relative">
           <div className="flex justify-end mb-2">
           <div className="flex items-center gap-4">
@@ -717,9 +753,25 @@ export default function ProfileForm({
           </div>
         </div>
 
-        {/* Icon grid — shows actual skillicons.dev images */}
-        <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 max-h-56 overflow-y-auto p-2 pr-3 -mx-2">
-          {SKILL_OPTIONS.map((skill) => {
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+          <input
+            type="search"
+            value={skillQuery}
+            onChange={(e) => setSkillQuery(e.target.value)}
+            placeholder={t.skillSearch}
+            aria-label={t.skillSearch}
+            className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg pl-9 pr-3 py-2 text-sm text-[var(--text-main)] placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-[#7C5CFC]/50 focus:border-transparent transition-all duration-150"
+          />
+        </div>
+
+        {visibleSkills.length === 0 && (
+          <p className="text-xs text-[var(--text-muted)] italic">{t.noSkillsFound}</p>
+        )}
+
+        {/* Icon grid — shows actual skillicons.dev images (scrolls inside the card only on larger screens) */}
+        <div className="grid grid-cols-5 xs:grid-cols-6 sm:grid-cols-8 gap-2 sm:max-h-56 sm:overflow-y-auto p-2 pr-3 -mx-2">
+          {visibleSkills.map((skill) => {
             const active = data.skills.includes(skill)
             const glowColor = SKILL_COLORS[skill] || '#7C5CFC'
             return (
@@ -762,7 +814,7 @@ export default function ProfileForm({
       </AccordionSection>
 
       {/* ── GitHub Widgets & Theme ─────────────────────── */}
-      <AccordionSection id="stats" title={t.widgetsAndTheme} isOpen={openSection === "stats"} onToggle={handleSectionToggle}>
+      <AccordionSection id="stats" step={5} summary={count(WIDGET_KEYS.filter((key) => data[key]).length)} title={t.widgetsAndTheme} isOpen={openSection === "stats"} onToggle={handleSectionToggle}>
         <div className="flex flex-col gap-4 relative">
 
 
@@ -781,37 +833,16 @@ export default function ProfileForm({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { key: 'showBanner' as const, label: t.widgetBanner },
-            { key: 'showCapsuleRender' as const, label: t.widgetCapsule },
-            { key: 'showTypingSvg' as const, label: t.widgetTypingSvg },
-            { key: 'showStats' as const, label: t.widgetStats },
-            { key: 'showStreak' as const, label: t.widgetStreak },
-            { key: 'showTopLangs' as const, label: t.widgetLangs },
-            { key: 'showSummaryCards' as const, label: t.widgetSummaryCards },
-            { key: 'showTrophies' as const, label: t.widgetTrophies },
-            { key: 'showActivityGraph' as const, label: t.widgetActivityGraph },
-            { key: 'show3dContrib' as const, label: t.widget3dContrib },
-            { key: 'showSnakeAnimation' as const, label: t.widgetSnake },
-            { key: 'showWakatime' as const, label: t.widgetWakatime },
-            { key: 'showVisitorBadge' as const, label: t.widgetViews },
-            { key: 'showCommittersRank' as const, label: t.widgetCommittersRank },
-          ].map((item) => (
-            <label
-              key={item.key}
-              className="flex items-center gap-2 bg-field/50 border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
-            >
-              <input
-                type="checkbox"
-                checked={data[item.key] as boolean}
-                onChange={(e) => update(item.key, e.target.checked as never)}
-                className="accent-[#7C5CFC] w-4 h-4 shrink-0"
-              />
-              <span className="text-[var(--text-light)] text-xs">{item.label}</span>
-            </label>
-          ))}
-        </div>
+        <WidgetGroup
+          title={t.widgetGroupHeader}
+          data={data}
+          onToggle={update}
+          items={[
+            ['showBanner', t.widgetBanner],
+            ['showCapsuleRender', t.widgetCapsule],
+            ['showTypingSvg', t.widgetTypingSvg],
+          ]}
+        />
 
         {/* Capsule color picker */}
         {data.showCapsuleRender && (
@@ -843,22 +874,19 @@ export default function ProfileForm({
           </div>
         )}
 
-        {/* WakaTime username */}
-        {data.showWakatime && (
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
-              {t.wakatimeUsernameLabel}
-            </label>
-            <input
-              type="text"
-              value={data.wakatimeUsername || ''}
-              onChange={(e) => update('wakatimeUsername', e.target.value)}
-              placeholder={t.wakatimePlaceholder}
-              className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#7C5CFC]/60"
-            />
-            <p className="text-xs text-amber-400">{t.wakatimeHint}</p>
-          </div>
-        )}
+        <WidgetGroup
+          title={t.widgetGroupStats}
+          data={data}
+          onToggle={update}
+          items={[
+            ['showStats', t.widgetStats],
+            ['showStreak', t.widgetStreak],
+            ['showTopLangs', t.widgetLangs],
+            ['showTrophies', t.widgetTrophies],
+            ['showSummaryCards', t.widgetSummaryCards],
+            ['showActivityGraph', t.widgetActivityGraph],
+          ]}
+        />
 
         {/* Stats Provider Selector — shown when stats or top langs are enabled */}
         {(data.showStats || data.showTopLangs) && (
@@ -892,6 +920,36 @@ export default function ProfileForm({
           </div>
         )}
 
+        <WidgetGroup
+          title={t.widgetGroupExtras}
+          data={data}
+          onToggle={update}
+          items={[
+            ['show3dContrib', t.widget3dContrib],
+            ['showSnakeAnimation', t.widgetSnake],
+            ['showWakatime', t.widgetWakatime],
+            ['showVisitorBadge', t.widgetViews],
+            ['showCommittersRank', t.widgetCommittersRank],
+          ]}
+        />
+
+        {/* WakaTime username */}
+        {data.showWakatime && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              {t.wakatimeUsernameLabel}
+            </label>
+            <input
+              type="text"
+              value={data.wakatimeUsername || ''}
+              onChange={(e) => update('wakatimeUsername', e.target.value)}
+              placeholder={t.wakatimePlaceholder}
+              className="w-full bg-[var(--bg-input)] border border-[var(--border-input)] rounded-lg px-3 py-2 text-sm text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#7C5CFC]/60"
+            />
+            <p className="text-xs text-amber-400">{t.wakatimeHint}</p>
+          </div>
+        )}
+
         {!isValidGithubUsername(cleanedGithub) && usesGithubWidgets(data) && (
           <p className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
             {t.githubRequiredWarning}
@@ -908,7 +966,7 @@ export default function ProfileForm({
       </AccordionSection>
 
       {/* ── GitHub Publish / Deploy ─────────────────────── */}
-      <AccordionSection id="extras" title={t.publishTitle} isOpen={openSection === "extras"} onToggle={handleSectionToggle}>
+      <AccordionSection id="extras" step={6} summary={session.loggedIn ? '✓' : undefined} title={t.publishTitle} isOpen={openSection === "extras"} onToggle={handleSectionToggle}>
         <div className="flex flex-col gap-4 relative">
           <div className="flex justify-end mb-2">
           {session.loggedIn && (
@@ -1059,44 +1117,125 @@ export default function ProfileForm({
 }
 
 
-function AccordionSection({ 
-  id, 
-  title, 
-  isOpen, 
-  onToggle, 
-  children 
-}: { 
-  id: string, 
-  title: string | React.ReactNode, 
-  isOpen: boolean, 
-  onToggle: (id: string) => void, 
-  children: React.ReactNode 
+/* ── Group of widget toggles ──────────────────────────── */
+function WidgetGroup({
+  title,
+  items,
+  data,
+  onToggle,
+}: {
+  title: string
+  items: [WidgetKey, string][]
+  data: ProfileData
+  onToggle: (key: WidgetKey, value: boolean) => void
 }) {
   return (
-    <div className={`relative bg-[var(--bg-card)] border rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] backdrop-blur-sm transition-all duration-300 ${
-      isOpen ? 'z-50 border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'z-10 border-[var(--border-card)] hover:border-[#7C5CFC]/30'
-    }`}>
-      <button
-        type="button"
-        aria-expanded={isOpen}
-        aria-controls={`section-${id}`}
-        onClick={() => onToggle(id)}
-        className="w-full flex items-center justify-between p-5 focus:outline-none transition-colors hover:bg-[#7C5CFC]/5"
-      >
-        <div className="flex items-center gap-2.5">
-          <div className={`w-1.5 h-[18px] rounded-full bg-gradient-to-b from-[#7C5CFC] to-[#a855f7] transition-all duration-300 ${isOpen ? 'opacity-100 shadow-[0_0_8px_rgba(124,92,252,0.6)]' : 'opacity-70'}`} />
-          <h2 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-colors duration-300 ${isOpen ? 'text-white' : 'text-[var(--text-main)]'}`}>
-            {title}
-          </h2>
-        </div>
-        <motion.div
-          initial={false}
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
+    <fieldset className="flex flex-col gap-2 min-w-0">
+      <legend className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">{title}</legend>
+      <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
+        {items.map(([key, label]) => (
+          <label
+            key={key}
+            className="flex items-center gap-2.5 min-h-11 bg-field/50 border border-[var(--border-input)] rounded-lg px-3 py-2 cursor-pointer hover:border-[#7C5CFC]/40 transition-all duration-150 select-none"
+          >
+            <input
+              type="checkbox"
+              checked={data[key]}
+              onChange={(e) => onToggle(key, e.target.checked)}
+              className="accent-[#7C5CFC] w-4 h-4 shrink-0"
+            />
+            <span className="text-[var(--text-light)] text-xs">{label}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
+function AccordionSection({
+  id,
+  step,
+  title,
+  summary,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  id: string
+  step: number
+  title: string
+  /** Short status shown on the header, e.g. the number of selected skills */
+  summary?: string
+  isOpen: boolean
+  onToggle: (id: string) => void
+  children: React.ReactNode
+}) {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const mounted = useRef(false)
+
+  // Once the previously open section has collapsed, bring the opened one into view
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true
+      return
+    }
+    if (!isOpen) return
+    const timer = setTimeout(() => {
+      const el = rootRef.current
+      if (!el) return
+      const { top } = el.getBoundingClientRect()
+      if (top < 72 || top > window.innerHeight * 0.6) {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+      }
+    }, 320)
+    return () => clearTimeout(timer)
+  }, [isOpen])
+
+  return (
+    <div
+      ref={rootRef}
+      className={`relative scroll-mt-20 lg:scroll-mt-4 bg-[var(--bg-card)] border rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] lg:backdrop-blur-sm transition-[border-color,box-shadow] duration-300 ${
+        // Above the next sections (for dropdowns) but below the sticky page header
+        isOpen ? 'z-30 border-[#7C5CFC]/60 shadow-[0_0_20px_rgba(124,92,252,0.15)]' : 'z-10 border-[var(--border-card)] hover:border-[#7C5CFC]/30'
+      }`}
+    >
+      <h2>
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={`section-${id}`}
+          onClick={() => onToggle(id)}
+          className="w-full flex items-center gap-3 p-4 sm:p-5 text-left rounded-2xl transition-colors hover:bg-[#7C5CFC]/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C5CFC]/60"
         >
-          <ChevronDown className={`w-5 h-5 transition-colors duration-300 ${isOpen ? 'text-[#a855f7]' : 'text-[var(--text-muted)]'}`} />
-        </motion.div>
-      </button>
+          <span
+            aria-hidden="true"
+            className={`flex items-center justify-center w-6 h-6 shrink-0 rounded-full text-[11px] font-bold transition-colors duration-300 ${
+              isOpen
+                ? 'bg-gradient-to-br from-[#7C5CFC] to-[#a855f7] text-white shadow-[0_0_8px_rgba(124,92,252,0.5)]'
+                : 'bg-[#7C5CFC]/15 text-[var(--text-accent)]'
+            }`}
+          >
+            {step}
+          </span>
+          <span className="flex-1 min-w-0 truncate text-xs font-bold uppercase tracking-widest text-[var(--text-main)]">
+            {title}
+          </span>
+          {summary && (
+            <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#7C5CFC]/15 text-[var(--text-accent)]">
+              {summary}
+            </span>
+          )}
+          <motion.span
+            initial={false}
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="shrink-0"
+          >
+            <ChevronDown className={`w-5 h-5 transition-colors duration-300 ${isOpen ? 'text-[#a855f7]' : 'text-[var(--text-muted)]'}`} />
+          </motion.span>
+        </button>
+      </h2>
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
@@ -1106,12 +1245,12 @@ function AccordionSection({
             animate="open"
             exit="collapsed"
             variants={{
-              open: { opacity: 1, height: "auto", transitionEnd: { overflow: "visible" } },
-              collapsed: { opacity: 0, height: 0, overflow: "hidden" }
+              open: { opacity: 1, height: 'auto', transitionEnd: { overflow: 'visible' } },
+              collapsed: { opacity: 0, height: 0, overflow: 'hidden' },
             }}
             transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
           >
-            <div className="p-5 pt-0">
+            <div className="p-4 pt-0 sm:p-5 sm:pt-0">
               {children}
             </div>
           </motion.div>

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Outfit } from 'next/font/google'
 import './globals.css'
 
@@ -32,6 +32,14 @@ export const metadata: Metadata = {
     description:
       'Create a beautiful GitHub profile README in seconds — no markdown needed.',
   },
+}
+
+// Browser UI color on phones
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#030014' },
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+  ],
 }
 
 export default function RootLayout({

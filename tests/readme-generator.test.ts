@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_DATA,
   generateReadme,
+  isValidEmail,
+  isValidWebsite,
   normalizeProfileData,
   ProfileData,
   SKILL_OPTIONS,
@@ -141,6 +143,15 @@ describe('generateReadme — layout details', () => {
     expect(tab('🇬🇧')).toContain('main desc')
     expect(tab('🇷🇺')).toContain('Main bio')
     expect(tab('🇷🇺')).toContain('ru desc')
+  })
+})
+
+describe('form hints use the same rules as the README', () => {
+  it('validates emails and websites', () => {
+    expect(isValidEmail('me@example.com')).toBe(true)
+    expect(isValidEmail('not-an-email')).toBe(false)
+    expect(isValidWebsite('example.com')).toBe(true)
+    expect(isValidWebsite('javascript:alert(1)')).toBe(false)
   })
 })
 

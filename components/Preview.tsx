@@ -101,7 +101,8 @@ export default function Preview({ markdown, previewMarkdown = markdown, demoUser
       </div>
 
       {/* ── Content ───────────────────────────────────── */}
-      <div id="preview-panel" role="tabpanel" className="flex-1 min-h-0 overflow-auto p-4 flex flex-col">
+      {/* Scrolls on its own only on desktop; on phones the page scrolls, so the sticky bar follows the screen */}
+      <div id="preview-panel" role="tabpanel" className="flex-1 lg:min-h-0 lg:overflow-auto p-4 flex flex-col">
         {demoUser && tab === 'preview' && (
           <p className="flex items-start gap-2 mb-3 text-xs text-amber-400/90 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2">
             <Info size={14} className="shrink-0 mt-0.5" />
@@ -116,7 +117,7 @@ export default function Preview({ markdown, previewMarkdown = markdown, demoUser
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="md-preview flex-1 bg-[var(--bg-card)] backdrop-blur-sm rounded-xl p-8 text-sm text-[var(--text-light)] leading-relaxed border border-line/50 transition-colors duration-300 shadow-sm"
+              className="md-preview flex-1 bg-[var(--bg-card)] backdrop-blur-sm rounded-xl p-4 sm:p-8 text-sm text-[var(--text-light)] leading-relaxed border border-line/50 transition-colors duration-300 shadow-sm"
               dangerouslySetInnerHTML={{ __html: html }}
             />
           ) : (
@@ -126,7 +127,7 @@ export default function Preview({ markdown, previewMarkdown = markdown, demoUser
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="flex-1 bg-[var(--bg-card)] backdrop-blur-sm rounded-xl p-6 text-xs text-[var(--text-light)] overflow-x-auto whitespace-pre-wrap font-mono border border-line/50 leading-relaxed transition-colors duration-300 shadow-sm"
+              className="flex-1 bg-[var(--bg-card)] backdrop-blur-sm rounded-xl p-4 sm:p-6 text-xs text-[var(--text-light)] overflow-x-auto whitespace-pre-wrap font-mono border border-line/50 leading-relaxed transition-colors duration-300 shadow-sm"
             >
               {markdown}
             </motion.pre>
@@ -134,7 +135,7 @@ export default function Preview({ markdown, previewMarkdown = markdown, demoUser
         </AnimatePresence>
 
         {/* ── Action Bar — sticks to the bottom of the visible preview ── */}
-        <div className="sticky bottom-4 z-10 self-center mt-4 flex items-center gap-2 p-1.5 bg-card/80 backdrop-blur-md border border-[var(--border-input)] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+        <div className="sticky bottom-20 lg:bottom-4 z-10 self-center mt-4 flex items-center gap-2 p-1.5 bg-card/80 backdrop-blur-md border border-[var(--border-input)] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
           <button
             onClick={handleCopy}
             aria-live="polite"

@@ -233,6 +233,10 @@ function emailUrl(value: string): string {
   return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(v) ? `mailto:${v}` : ''
 }
 
+/** Same checks the README uses — invalid values are left out of it. */
+export const isValidEmail = (value: string) => emailUrl(value) !== ''
+export const isValidWebsite = (value: string) => websiteUrl(value) !== ''
+
 type SocialKey = 'twitter' | 'linkedin' | 'telegram' | 'facebook' | 'instagram' | 'youtube' | 'website' | 'email'
 
 const SOCIAL_LINKS: { key: SocialKey; label: string; color: string; logo: string; url: (v: string) => string }[] = [
