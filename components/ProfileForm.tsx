@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ProfileData, SKILL_OPTIONS, THEMES, LAYOUT_TEMPLATES, SKILL_COLORS } from '@/lib/readme-generator'
 import { X, Sparkles, Loader2, CheckCircle, XCircle, ChevronDown } from 'lucide-react'
@@ -87,9 +87,12 @@ export default function ProfileForm({
     setOpenSection(prev => prev === id ? '' : id)
   }
 
-  useEffect(() => {
+  // Open the section the page asks for (adjusting state while rendering, as React recommends)
+  const [handledSection, setHandledSection] = useState(requestedSection)
+  if (requestedSection !== handledSection) {
+    setHandledSection(requestedSection)
     if (requestedSection) setOpenSection(requestedSection)
-  }, [requestedSection])
+  }
 
   const cleanedGithub = cleanGithubUsername(data.github)
   const githubInvalid = cleanedGithub !== '' && !isValidGithubUsername(cleanedGithub)
@@ -337,17 +340,17 @@ export default function ProfileForm({
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setToneDropdownOpen(false)} />
                     <div className="absolute top-[calc(100%+4px)] left-0 w-full z-40 bg-[var(--bg-input)] border border-[var(--border-input)] rounded-xl shadow-2xl py-1 max-h-56 overflow-y-auto backdrop-blur-md">
-                      {[
+                      {([
                         { value: 'professional', label: t.toneProfessional },
                         { value: 'minimalist', label: t.toneMinimalist },
                         { value: 'creative', label: t.toneCreative },
                         { value: 'hacker', label: t.toneHacker },
-                      ].map((opt) => (
+                      ] as const).map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
                           onClick={() => {
-                            setAiTone(opt.value as any)
+                            setAiTone(opt.value)
                             setToneDropdownOpen(false)
                           }}
                           className={`w-full text-left px-3.5 py-1.5 text-xs transition-all duration-150 ${

@@ -1,102 +1,87 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Github, Sparkles, Info, CheckCircle, XCircle, X } from 'lucide-react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
+import { Sparkles, Info, CheckCircle, XCircle, X } from 'lucide-react'
+import GithubIcon from '@/components/GithubIcon'
 import ProfileForm from '@/components/ProfileForm'
 import Preview from '@/components/Preview'
 import ThemeToggle from '@/components/ThemeToggle'
 import ClickSpark from '@/components/ClickSpark'
 import { DEFAULT_DATA, generateReadme, ProfileData } from '@/lib/readme-generator'
-import { TRANSLATIONS, translateError } from '@/lib/i18n'
+import { Language, TRANSLATIONS, translateError } from '@/lib/i18n'
 import { escapeHtml } from '@/lib/escape'
+import { useOrigin, useStoredChoice } from '@/lib/browser-state'
 import confetti from 'canvas-confetti'
 
 type AuthNotice = { kind: 'error'; code: string } | { kind: 'connected' }
 
+const LANGUAGES = ['uz', 'en', 'ru'] as const
+const COLOR_MODES = ['dark', 'light'] as const
+
+// Result of the GitHub OAuth redirect (/?error=… or /?connected=1), captured once
+// in the browser before the query string is cleaned up.
+const oauthRedirect: AuthNotice | null = (() => {
+  if (typeof window === 'undefined') return null
+  const params = new URLSearchParams(window.location.search)
+  const error = params.get('error')
+  if (error) return { kind: 'error', code: error }
+  return params.has('connected') ? { kind: 'connected' } : null
+})()
+
+const noopSubscribe = () => () => {}
+
 export default function Home() {
   const [data, setData] = useState<ProfileData>(DEFAULT_DATA)
-  const [hostUrl, setHostUrl] = useState('https://github-readme-generator.vercel.app')
-  const [lang, setLang] = useState<'uz' | 'en' | 'ru'>('uz')
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
+  const hostUrl = useOrigin('https://github-readme-generator.vercel.app')
+  const [lang, setLang] = useStoredChoice<Language>('app_lang', LANGUAGES, 'uz')
+  const [theme, setTheme] = useStoredChoice<'light' | 'dark'>('app_theme', COLOR_MODES, 'dark')
   const [session, setSession] = useState<{ loggedIn: boolean; username?: string; name?: string; avatarUrl?: string }>({
     loggedIn: false,
   })
   const [committing, setCommitting] = useState(false)
   const [commitResult, setCommitResult] = useState<{ success: boolean; url?: string; error?: string } | null>(null)
-  const [authNotice, setAuthNotice] = useState<AuthNotice | null>(null)
-  const [requestedSection, setRequestedSection] = useState<string | null>(null)
+  const authResult = useSyncExternalStore(noopSubscribe, () => oauthRedirect, () => null)
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
+  const authNotice = noticeDismissed ? null : authResult
+  const t = TRANSLATIONS[lang]
 
-  // Set host url on load
+  // Drop ?error= / ?connected= from the address bar once they have been read
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setHostUrl(window.location.origin)
-    }
-  }, [])
+    if (authResult) window.history.replaceState(null, '', window.location.pathname)
+  }, [authResult])
 
-  // Result of the GitHub OAuth redirect (/?error=… or /?connected=1)
+  // Apply the stored theme and language to <html>
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const error = params.get('error')
-    if (error) {
-      setAuthNotice({ kind: 'error', code: error })
-    } else if (params.has('connected')) {
-      setAuthNotice({ kind: 'connected' })
-    } else {
-      return
-    }
-    setRequestedSection('extras')
-    window.history.replaceState(null, '', window.location.pathname)
-  }, [])
+    document.documentElement.className = theme
+  }, [theme])
 
-  // Load language preference
   useEffect(() => {
-    const saved = localStorage.getItem('app_lang')
-    if (saved === 'uz' || saved === 'en' || saved === 'ru') {
-      setLang(saved)
-    }
-  }, [])
-
-  // Load theme preference
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme')
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      setTheme(savedTheme)
-      document.documentElement.className = savedTheme
-    } else {
-      setTheme('dark')
-      document.documentElement.className = 'dark'
-    }
-  }, [])
+    document.documentElement.lang = lang
+  }, [lang])
 
   // Load user session
   useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const res = await fetch('/api/auth/session')
-        const json = await res.json()
-        if (json.loggedIn) {
-          setSession(json)
-          // Pre-fill GitHub username if empty
-          if (!data.github && json.username) {
-            setData((prev) => ({ ...prev, github: json.username }))
-          }
+    fetch('/api/auth/session')
+      .then((res) => res.json())
+      .then((json) => {
+        if (!json.loggedIn) return
+        setSession(json)
+        // Pre-fill the GitHub username unless the user already typed one
+        if (json.username) {
+          setData((prev) => (prev.github ? prev : { ...prev, github: json.username }))
         }
-      } catch (err) {
-        console.error('Session loading failed', err)
-      }
-    }
-    fetchSession()
+      })
+      .catch((err) => console.error('Session loading failed', err))
   }, [])
 
-  const handleSetLang = (l: 'uz' | 'en' | 'ru') => {
+  const handleSetLang = (l: Language) => {
     setLang(l)
-    localStorage.setItem('app_lang', l)
   }
 
   const handleSetTheme = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme)
-    localStorage.setItem('app_theme', newTheme)
+    // Applied synchronously so the View Transition captures the new theme
     document.documentElement.className = newTheme
+    setTheme(newTheme)
   }
 
   const handleLogout = async () => {
@@ -129,15 +114,14 @@ export default function Home() {
         spread: 80,
         origin: { y: 0.6 }
       })
-    } catch (e: any) {
-      setCommitResult({ success: false, error: e.message || 'Error occurred' })
+    } catch (e) {
+      setCommitResult({ success: false, error: e instanceof Error ? e.message : t.errors.unknown })
     } finally {
       setCommitting(false)
     }
   }
 
   const markdown = generateReadme(data, hostUrl)
-  const t = TRANSLATIONS[lang]
 
   return (
     <main className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-300 relative overflow-hidden">
@@ -196,7 +180,7 @@ export default function Home() {
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--bg-input)] hover:bg-[#7C5CFC]/10 border border-[var(--border-input)] hover:border-[#7C5CFC]/40 text-[var(--text-main)] transition-all duration-150 hover:shadow-[0_0_10px_rgba(124,92,252,0.15)] group shrink-0"
           >
-            <Github size={14} className="group-hover:rotate-[360deg] transition-transform duration-500 text-[var(--text-muted)] group-hover:text-[var(--text-main)]" />
+            <GithubIcon size={14} className="group-hover:rotate-[360deg] transition-transform duration-500 text-[var(--text-muted)] group-hover:text-[var(--text-main)]" />
             <span>⭐ Star on GitHub</span>
           </a>
         </div>
@@ -218,7 +202,7 @@ export default function Home() {
           </span>
           <button
             type="button"
-            onClick={() => setAuthNotice(null)}
+            onClick={() => setNoticeDismissed(true)}
             aria-label={t.dismiss}
             className="p-1 rounded hover:bg-white/10 transition-colors"
           >
@@ -240,7 +224,7 @@ export default function Home() {
             onCommit={handleCommit}
             committing={committing}
             commitResult={commitResult}
-            requestedSection={requestedSection}
+            requestedSection={authResult ? 'extras' : null}
           />
         </div>
 

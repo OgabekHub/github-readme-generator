@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Sun, Moon } from 'lucide-react'
 
 interface ThemeToggleProps {
@@ -9,16 +8,6 @@ interface ThemeToggleProps {
 }
 
 export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return <div className="w-9 h-9" /> // placeholder to prevent layout shifts
-  }
-
   const toggleTheme = (e: React.MouseEvent<HTMLButtonElement>) => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark'
 
@@ -35,7 +24,6 @@ export default function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
       document.documentElement.classList.add('theme-switching')
 
       // Start view transition
-      // @ts-ignore
       const transition = document.startViewTransition(() => {
         onChange(nextTheme)
       })

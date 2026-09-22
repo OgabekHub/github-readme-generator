@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Copy, Check, Download, Eye, Code2 } from 'lucide-react'
 import { markdownToHtml } from '@/lib/markdown'
+import { useIsClient } from '@/lib/browser-state'
 import { TRANSLATIONS } from '@/lib/i18n'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -16,11 +17,8 @@ export default function Preview({ markdown, lang = 'uz' }: PreviewProps) {
   const [tab, setTab] = useState<'preview' | 'code'>('preview')
   const [copied, setCopied] = useState(false)
   // Sanitizing needs the DOM, so the preview HTML is only built in the browser
-  const [html, setHtml] = useState('')
-
-  useEffect(() => {
-    setHtml(markdownToHtml(markdown))
-  }, [markdown])
+  const isClient = useIsClient()
+  const html = useMemo(() => (isClient ? markdownToHtml(markdown) : ''), [isClient, markdown])
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(markdown)
